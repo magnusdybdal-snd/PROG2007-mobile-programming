@@ -1,4 +1,4 @@
-package com.example.motorcycleparking.ui.theme
+package com.example.motorcycleparking.core.core_ui
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

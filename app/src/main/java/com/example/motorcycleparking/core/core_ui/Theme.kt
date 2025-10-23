@@ -1,6 +1,5 @@
-package com.example.motorcycleparking.ui.theme
+package com.example.motorcycleparking.core.core_ui
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
