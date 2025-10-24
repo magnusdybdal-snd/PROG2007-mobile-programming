@@ -2,13 +2,15 @@ package com.example.motorcycleparking.core.core_ui
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.SearchBarColors
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
@@ -72,6 +74,29 @@ object AppNavBar {
             unselectedTextColor = cs.onSurfaceVariant,
             disabledIconColor = cs.onSurface.copy(alpha = 0.38f),
             disabledTextColor = cs.onSurface.copy(alpha = 0.38f)
+        )
+    }
+}
+
+object AppSearchBar {
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun colors(): SearchBarColors {
+        val cs = MaterialTheme.colorScheme
+        SearchBarDefaults.inputFieldColors(
+            focusedTextColor = cs.onSurfaceVariant, // white
+            unfocusedTextColor = cs.onSurfaceVariant,
+            focusedLeadingIconColor = cs.onSecondaryContainer, // white
+            unfocusedLeadingIconColor = cs.onSecondaryContainer,
+            focusedTrailingIconColor = cs.onSecondaryContainer,
+            unfocusedTrailingIconColor = cs.onSecondaryContainer,
+            cursorColor = cs.tertiary,              // lightTeal
+            focusedPlaceholderColor = cs.outline,   // lightGrey
+            unfocusedPlaceholderColor = cs.onSurface.copy(alpha = 0.6f)
+        )
+        return SearchBarDefaults.colors(
+            containerColor = cs.surface,                 // teal
+            dividerColor = cs.outline                  // lightGrey
         )
     }
 }
