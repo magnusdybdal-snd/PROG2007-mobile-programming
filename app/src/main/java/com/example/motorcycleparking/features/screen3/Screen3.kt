@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.motorcycleparking.core.core_ui.RedBackground
 import com.example.motorcycleparking.core.core_ui.composable.BasicScreen
 
 /**
@@ -26,6 +25,6 @@ fun Screen3(
 ){
     BasicScreen(
         text = "Settings",
-        color = RedBackground
+        color = Color.Red
     )
 }
