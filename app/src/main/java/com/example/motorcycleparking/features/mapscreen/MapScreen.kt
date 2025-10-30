@@ -24,7 +24,7 @@ fun MapScreen(
         color = GreenBackground,
     )
 
-    Button(
+    Button( // TODO remove, this is a temporary button to get to the loginscreen.
         onClick = {
             // 👇 Navigate to your login route
             navController.navigate(route = Routes.LOGIN)
