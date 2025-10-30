@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.motorcycleparking.core.core_navigation.NavItem
 import com.example.motorcycleparking.core.core_navigation.Routes
+import com.example.motorcycleparking.features.loginscreen.LoginScreen
 import com.example.motorcycleparking.features.mapscreen.MapScreen
 import com.example.motorcycleparking.features.screen2.Screen2
 import com.example.motorcycleparking.features.screen3.Screen3
@@ -78,6 +79,7 @@ fun MainScreen(
             composable(Routes.MAP)     { MapScreen(Modifier, navController) }
             composable(Routes.SCREEN2) { Screen2(  Modifier, navController) }
             composable(Routes.SCREEN3) { Screen3(  Modifier, navController) }
+            composable(Routes.LOGIN)   { LoginScreen(Modifier, navController) }
         }
     }
 }
