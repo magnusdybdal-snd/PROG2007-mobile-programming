@@ -11,6 +11,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun GoogleMapView() {
+
     // This manages the current camera position, which includes: LatLng (center of the map),
     // zoom level, bearing (rotation) & tilt (3D perspective).
     val cameraPositionState = rememberCameraPositionState()
@@ -30,6 +31,7 @@ fun GoogleMapView() {
         properties = MapProperties(
             // Optional extras:
              mapType = MapType.NORMAL,
+            // isMyLocationEnabled = true,
             // isTrafficEnabled = true,
             // isBuildingsEnabled = true,
             // minZoomPreference = 10f,
