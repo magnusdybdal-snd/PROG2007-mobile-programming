@@ -1,11 +1,13 @@
 package com.example.motorcycleparking.app
 
+import android.R
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -21,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.motorcycleparking.core.core_navigation.NavItem
 import com.example.motorcycleparking.core.core_navigation.Routes
+import com.example.motorcycleparking.features.loginscreen.LoginScreen
 import com.example.motorcycleparking.features.mapscreen.MapScreen
 import com.example.motorcycleparking.features.screen2.Screen2
 import com.example.motorcycleparking.features.screen3.Screen3
@@ -48,8 +51,13 @@ fun MainScreen(
 
     Scaffold(
         bottomBar = {
+            val cs = MaterialTheme.colorScheme
             if (showBottomBar) {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = cs.surface,
+                    contentColor = cs.onSurface
+
+                ) {
                     navItemList.forEach { item ->
                         NavigationBarItem(
                             selected = currentDestination.isOnRoute(item.route),
@@ -78,6 +86,7 @@ fun MainScreen(
             composable(Routes.MAP)     { MapScreen(Modifier, navController) }
             composable(Routes.SCREEN2) { Screen2(  Modifier, navController) }
             composable(Routes.SCREEN3) { Screen3(  Modifier, navController) }
+            composable(Routes.LOGIN)   { LoginScreen(Modifier, navController) }
         }
     }
 }
