@@ -1,5 +1,6 @@
 package com.example.motorcycleparking.features.loginscreen
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
+import com.example.motorcycleparking.data.FirebaseRepo
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -34,6 +39,9 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = modifier
@@ -76,6 +84,25 @@ fun LoginScreen(
             // --- Login Button ---
             Button(
                 onClick = {
+                    scope.launch {
+                        try {
+                            val uid = FirebaseRepo.signInWithEmailPassword(
+                                email,
+                                password
+                            )
+                            Toast.makeText(
+                                context,
+                                "Signed in as $uid",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                context,
+                                e.message ?: "Sign in failed",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
                     // TODO: Add login logic or navigation
                     // navController.navigate("home")
                 },
