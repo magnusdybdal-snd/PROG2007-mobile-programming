@@ -37,14 +37,9 @@ class FirebaseRepo @Inject constructor(
     }
 
     suspend fun createUser(email: String, password: String): FirebaseUser? {
-        return try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             Log.d(ControlsProviderService.TAG, "Successfully created account")
-            result.user
-        } catch (e: Exception) {
-            Log.w(ControlsProviderService.TAG, "Creation failed: ", e)
-            null
-        }
+            return result.user
     }
     fun signOut(){
         auth.signOut()
