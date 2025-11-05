@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -18,8 +20,6 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import timber.log.Timber
 
@@ -44,6 +44,16 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
             // Handle the case when permission is denied
             Timber.e("Location permission was denied by the user.")
         }
+    }
+
+    // Track if permission is granted
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
     }
 
     // Request the location permission when the composable is launched
@@ -78,19 +88,11 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
             mapType = MapType.NORMAL,
             isBuildingEnabled = true,
             isTrafficEnabled = true,
+            isMyLocationEnabled = hasLocationPermission // blue dot
         ),
         uiSettings = MapUiSettings(
             myLocationButtonEnabled = true,
             zoomControlsEnabled = true
         )
-    ) {
-        // If the user's location is available, place a marker on the map
-        userLocation?.let {
-            Marker(
-                state = MarkerState(position = it),
-                title = "Your Location",
-                snippet = "This is where you are currently located."
-            )
-        }
-    }
+    )
 }
