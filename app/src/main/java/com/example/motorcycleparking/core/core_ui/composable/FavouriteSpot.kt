@@ -34,10 +34,10 @@ data class ParkingSpot(
 
 @Composable
 fun ParkingSpotCard(
+    modifier: Modifier = Modifier,
     parkingSpot: ParkingSpot,
     onFavoriteClick: () -> Unit = {},
     onInfoClick: () -> Unit = {},
-    modifier: Modifier = Modifier,
     cs: ColorScheme = MaterialTheme.colorScheme
 ) {
     Card(
