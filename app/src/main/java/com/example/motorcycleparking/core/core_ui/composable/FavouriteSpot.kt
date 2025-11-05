@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,11 +33,12 @@ data class ParkingSpot(
 )
 
 @Composable
-fun ParkingSpotItem(
+fun ParkingSpotCard(
     parkingSpot: ParkingSpot,
     onFavoriteClick: () -> Unit = {},
     onInfoClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    cs: ColorScheme = MaterialTheme.colorScheme
 ) {
     Card(
         modifier = modifier
@@ -59,7 +61,7 @@ fun ParkingSpotItem(
                     text = parkingSpot.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = cs.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -67,16 +69,16 @@ fun ParkingSpotItem(
                 Text(
                     text = parkingSpot.address,
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = cs.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Surface(
                     color = if (parkingSpot.isPaid)
-                        MaterialTheme.colorScheme.errorContainer
+                        cs.errorContainer
                     else
-                        MaterialTheme.colorScheme.primaryContainer,
+                        cs.primaryContainer,
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
@@ -85,9 +87,9 @@ fun ParkingSpotItem(
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = if (parkingSpot.isPaid)
-                            MaterialTheme.colorScheme.onErrorContainer
+                            cs.onErrorContainer
                         else
-                            MaterialTheme.colorScheme.onPrimaryContainer
+                            cs.onPrimaryContainer
                     )
                 }
             }
@@ -98,7 +100,7 @@ fun ParkingSpotItem(
                 Icon(
                     imageVector = Icons.Filled.Info,
                     contentDescription = "information",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = cs.primary
                 )
             }
             // Right side: Heart icon
@@ -108,7 +110,7 @@ fun ParkingSpotItem(
                 Icon(
                     imageVector = Icons.Filled.Favorite,
                     contentDescription = "Favorite",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = cs.primary
                 )
             }
         }
@@ -117,18 +119,18 @@ fun ParkingSpotItem(
 
 @Preview(showBackground = true)
 @Composable
-fun ParkingSpotItemPreview() {
+fun ParkingSpotCardPreview() {
     MaterialTheme {
         Column {
-            ParkingSpotItem(
+            ParkingSpotCard(
                 parkingSpot = ParkingSpot(
                     name = "Downtown Parking",
                     address = "123 Main Street, City Center",
-                    isPaid = true
+                    isPaid = true,
                 )
             )
 
-            ParkingSpotItem(
+            ParkingSpotCard(
                 parkingSpot = ParkingSpot(
                     name = "Park & Ride Lot",
                     address = "456 Oak Avenue, North Side",
