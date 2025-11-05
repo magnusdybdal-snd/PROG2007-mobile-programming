@@ -90,4 +90,17 @@ class FirebaseRepo @Inject constructor(
 
         return results
     }
+    
+    suspend fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
+    }
+
+    suspend fun toggleFavorite(userId: String, spotId: String) {
+        // TODO: Implement
+    }
+
+    suspend fun getFavorites(userId: String): List<ParkingSpot> {
+        // TODO: Implement
+        return emptyList()
+    }
 }
