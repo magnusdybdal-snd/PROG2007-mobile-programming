@@ -18,7 +18,6 @@ import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
 import com.example.motorcycleparking.domain.mockNames
 
-
 /**
  * Displays Map screen
  */
@@ -46,6 +45,7 @@ fun MapScreen(
         },
         searchResults = searchResults
     )
+
     Button( // TODO remove, this is a temporary button to get to the loginscreen.
         onClick = {
             // 👇 Navigate to your login route

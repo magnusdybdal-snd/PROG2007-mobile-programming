@@ -2,6 +2,8 @@ package com.example.motorcycleparking.core.core_ui
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItemColors
@@ -15,20 +17,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AppColor.black,
+    primary = AppColor.teal,
     onPrimary = AppColor.white,
-    secondary = AppColor.lightGrey,
-    onSecondary = AppColor.darkGrey,
-    tertiary = AppColor.lightTeal,
-    onTertiary = AppColor.white,
-    background = AppColor.black,
-    onBackground = AppColor.white,
-    surface = AppColor.teal,
+    secondary = AppColor.darkGrey,
+    onSecondary = AppColor.white,
+    tertiary = AppColor.fadedTeal,
+    onTertiary = AppColor.black,
+    background = AppColor.white,
+    onBackground = AppColor.black,
+    surface = AppColor.lightGrey,
     onSurface = AppColor.black,
-    onSurfaceVariant = AppColor.white,
-    secondaryContainer = AppColor.fadedTeal,
-    onSecondaryContainer = AppColor.white,
-    outline = AppColor.lightGrey
+    onSurfaceVariant = AppColor.darkGrey,
+    secondaryContainer = AppColor.lightTeal,
+    onSecondaryContainer = AppColor.black,
+    outline = AppColor.darkGrey
 )
 
 // Only one theme in app.
@@ -97,6 +99,19 @@ object AppSearchBar {
         return SearchBarDefaults.colors(
             containerColor = cs.surface,                 // teal
             dividerColor = cs.outline                  // lightGrey
+        )
+    }
+}
+
+object AppCard {
+    @Composable
+    fun colors(): CardColors {
+        val cs = MaterialTheme.colorScheme
+        return CardDefaults.cardColors(
+            containerColor = cs.surface,
+            contentColor = cs.onSurface,
+            disabledContainerColor = cs.surface.copy(alpha = 0.38f),
+            disabledContentColor = cs.onSurface.copy(alpha = 0.38f)
         )
     }
 }
