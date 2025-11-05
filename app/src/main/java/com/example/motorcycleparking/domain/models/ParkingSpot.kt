@@ -9,6 +9,5 @@ data class ParkingSpot(
     val displayAddress: String,
     val latitude: Double,
     val longitude: Double,
-    val paid: Boolean,
-    val imageUrl: String
+    val free: Boolean
 )
