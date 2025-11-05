@@ -90,7 +90,7 @@ class FirebaseRepo @Inject constructor(
 
         return results
     }
-    
+
     suspend fun getCurrentUserId(): String? {
         return auth.currentUser?.uid
     }
