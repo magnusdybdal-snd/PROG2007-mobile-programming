@@ -22,15 +22,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.motorcycleparking.core.core_ui.AppCard
+import com.example.motorcycleparking.domain.models.ParkingSpot
 
-data class ParkingSpot(
-    val name: String,
-    val address: String,
-    val isPaid: Boolean
-)
 
 @Composable
 fun ParkingSpotCard(
@@ -44,7 +40,8 @@ fun ParkingSpotCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = AppCard.colors()
     ) {
         Row(
             modifier = Modifier
@@ -57,39 +54,48 @@ fun ParkingSpotCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(
-                    text = parkingSpot.name,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = cs.onSurface
-                )
+                parkingSpot.name?.let {
+                    Text(
+                        text = it,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = cs.onSurface
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = parkingSpot.address,
-                    fontSize = 14.sp,
-                    color = cs.onSurfaceVariant
-                )
+                parkingSpot.displayAddress?.let {
+                    Text(
+                        text = it,
+                        fontSize = 14.sp,
+                        color = cs.onSurface
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Surface(
-                    color = if (parkingSpot.isPaid)
+                    color = if (parkingSpot.free == false)
                         cs.errorContainer
                     else
                         cs.primaryContainer,
                     shape = MaterialTheme.shapes.small
                 ) {
                     Text(
-                        text = if (parkingSpot.isPaid) "Paid" else "Free",
+                        text = when (parkingSpot.free) {
+                            false -> "Paid"
+                            null ->  "Unknown"
+                            else ->  "Free"
+                        },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = if (parkingSpot.isPaid)
-                            cs.onErrorContainer
-                        else
-                            cs.onPrimaryContainer
+                        color = when (parkingSpot.free) {
+                            false -> cs.onErrorContainer
+                            null  -> cs.onPrimaryContainer
+                            else  -> cs.onPrimaryContainer
+                        }
                     )
                 }
             }
@@ -113,30 +119,6 @@ fun ParkingSpotCard(
                     tint = cs.primary
                 )
             }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ParkingSpotCardPreview() {
-    MaterialTheme {
-        Column {
-            ParkingSpotCard(
-                parkingSpot = ParkingSpot(
-                    name = "Downtown Parking",
-                    address = "123 Main Street, City Center",
-                    isPaid = true,
-                )
-            )
-
-            ParkingSpotCard(
-                parkingSpot = ParkingSpot(
-                    name = "Park & Ride Lot",
-                    address = "456 Oak Avenue, North Side",
-                    isPaid = false
-                )
-            )
         }
     }
 }

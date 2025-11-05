@@ -2,6 +2,8 @@ package com.example.motorcycleparking.core.core_ui
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItemColors
@@ -97,6 +99,19 @@ object AppSearchBar {
         return SearchBarDefaults.colors(
             containerColor = cs.surface,                 // teal
             dividerColor = cs.outline                  // lightGrey
+        )
+    }
+}
+
+object AppCard {
+    @Composable
+    fun colors(): CardColors {
+        val cs = MaterialTheme.colorScheme
+        return CardDefaults.cardColors(
+            containerColor = cs.surface,
+            contentColor = cs.onSurface,
+            disabledContainerColor = cs.surface.copy(alpha = 0.38f),
+            disabledContentColor = cs.onSurface.copy(alpha = 0.38f)
         )
     }
 }
