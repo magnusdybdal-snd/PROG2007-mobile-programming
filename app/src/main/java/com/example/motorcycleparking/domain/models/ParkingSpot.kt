@@ -7,7 +7,8 @@ data class ParkingSpot(
     val id: String,
     val note: String,
     val displayAddress: String,
-    val geoPoint: GeoPoint,
+    val latitude: Double,
+    val longitude: Double,
     val paid: Boolean,
-    val image: Metadata // TODO: Metadata correct?
+    val imageUrl: String
 )

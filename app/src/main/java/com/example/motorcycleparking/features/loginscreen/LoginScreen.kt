@@ -86,7 +86,7 @@ fun LoginScreen(
                 onClick = {
                     scope.launch {
                         try {
-                            val uid = FirebaseRepo.signInWithEmailPassword(
+                            val uid = FirebaseRepo.signInWithEmailPasswoo(
                                 email,
                                 password
                             )
