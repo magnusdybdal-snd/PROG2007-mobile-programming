@@ -95,32 +95,4 @@ fun FavoriteScreen(
             }
         }
     }
-
-    Column {
-        PageHeading(
-            modifier = Modifier,
-            text = "Favorites"
-        )
-
-        ParkingSpotCard(
-            parkingSpot = ParkingSpot(
-                name = "Downtown Parking",
-                id = null,
-                displayAddress = "123 Main Street, City Center",
-                free = true,
-                note = null
-            )
-        )
-
-        ParkingSpotCard(
-            parkingSpot = ParkingSpot(
-                name = "Park & Ride Lot",
-                id = null,
-                displayAddress = "456 Oak Avenue, North Side",
-                free = false,
-                note = null
-            )
-
-        )
-    }
 }
