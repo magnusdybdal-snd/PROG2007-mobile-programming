@@ -14,6 +14,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,103 +30,114 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
 import com.example.motorcycleparking.data.FirebaseRepo
 import kotlinx.coroutines.launch
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.workoutapp.core.core_ui.composable.LoadingStateView
 
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    navController: NavHostController
+    navController: NavHostController,
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // --- App Title ---
-            Text(
-                text = "Motorcycle Parking",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-
-            // --- Email Field ---
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // --- Password Field ---
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            // --- Login Button ---
-            Button(
-                onClick = {
-                    scope.launch {
-                        try {
-                            val uid = FirebaseRepo.signInWithEmailPassword(
-                                email,
-                                password
-                            )
-                            Toast.makeText(
-                                context,
-                                "Signed in as $uid",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                context,
-                                e.message ?: "Sign in failed",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-                    // TODO: Add login logic or navigation
-                    // navController.navigate("home")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text("Login")
+    // Side effect: Navigate to map screen on success
+    LaunchedEffect(uiState.isSignedIn) {
+        if (uiState.isSignedIn) {
+            navController.navigate("map") {
+                popUpTo("login") { inclusive = true }
             }
             GoogleSignInButton(
                 // TODO implement button functionality
                 onClick = {/*TODO*/ },
             )
+        }
+    }
 
-            // --- Register Text ---
-            Text(
-                text = "Don't have an account? Register here",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable {
-                    // TODO: navigate to register screen
+    // Side effect: Show error toast
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
+    when {
+        uiState.isLoading -> LoadingStateView()
+        else -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // --- App Title ---
+                    Text(
+                        text = "Motorcycle Parking",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center
+                    )
+
+                    // --- Email Field ---
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // --- Password Field ---
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // --- Login Button ---
+                    Button(
+                        onClick = {
+                            viewModel.signInWithEmailPassword(email, password)
+                        },
+                        enabled = email.isNotBlank() && password.isNotBlank(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text("Login")
+                    }
+                    GoogleSignInButton(
+                        onClick = { /*TODO*/ },
+                    )
+
+                    // --- Register Text ---
+                    Text(
+                        text = "Don't have an account? Register here",
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable
+                        {
+                            navController.navigate(Routes.REGISTER)
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 }
