@@ -10,5 +10,4 @@ data class ParkingSpot(
     val geoPoint: GeoPoint,
     val geoHash: String,
     val paid: Boolean,
-    val image: Metadata // TODO: Metadata correct?
 )
