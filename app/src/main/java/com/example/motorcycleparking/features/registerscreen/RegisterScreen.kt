@@ -94,8 +94,7 @@ fun RegisterScreen(
                                 "Account created successfully using ${uid?.email}!",
                                 Toast.LENGTH_LONG
                             ).show()
-                            // TODO: Navigate to home or login screen
-                            // navController.navigate("home")
+                           navController.popBackStack() // Return to login-page.
                         } catch (e: Exception) {
                             Toast.makeText(
                                 context,
@@ -117,7 +116,7 @@ fun RegisterScreen(
                 text = "Already have an account? Log in here.",
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable {
-                    // TODO: navigate to register screen
+                    navController.popBackStack() // Return to login page.
                 }
             )
         }
