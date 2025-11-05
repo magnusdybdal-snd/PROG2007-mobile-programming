@@ -19,7 +19,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,7 +31,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.workoutapp.core.core_ui.composable.LoadingStateView
 
@@ -108,7 +106,8 @@ fun LoginScreen(
 
                     // --- Login Button ---
                     Button(
-                        onClick = { viewModel.signInWithEmailPassword(email, password)
+                        onClick = {
+                            viewModel.signInWithEmailPassword(email, password)
                         },
                         enabled = email.isNotBlank() && password.isNotBlank(),
                         modifier = Modifier
@@ -121,15 +120,17 @@ fun LoginScreen(
                         onClick = { /*TODO*/ },
                     )
 
-            // --- Register Text ---
-            Text(
-                text = "Don't have an account? Register here",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable
-                 {
-                    navController.navigate(Routes.REGISTER)
+                    // --- Register Text ---
+                    Text(
+                        text = "Don't have an account? Register here",
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable
+                        {
+                            navController.navigate(Routes.REGISTER)
+                        }
+                    )
                 }
-            )
+            }
         }
     }
 }

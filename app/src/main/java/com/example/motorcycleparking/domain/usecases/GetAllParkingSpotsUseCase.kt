@@ -21,8 +21,7 @@ class GetAllParkingSpotsUseCase @Inject constructor(
                     displayAddress = "123 Main St",
                     latitude = 63.4305,
                     longitude = 10.3951,
-                    paid = true,
-                    imageUrl = ""
+                    free = true
                 ),
                 ParkingSpot(
                     id = "2",
@@ -31,8 +30,7 @@ class GetAllParkingSpotsUseCase @Inject constructor(
                     displayAddress = "456 Harbor Rd",
                     latitude = 63.4365,
                     longitude = 10.3989,
-                    paid = false,
-                    imageUrl = ""
+                    free = false
                 )
             )
         )

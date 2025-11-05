@@ -28,7 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.example.motorcycleparking.data.FirebaseRepo
+import com.example.motorcycleparking.data.api.FirebaseRepo
 import kotlinx.coroutines.launch
 
 @Composable
@@ -83,26 +83,26 @@ fun RegisterScreen(
             // --- Login Button ---
             Button(
                 onClick = {
-                    scope.launch {
-                        try {
-                            val uid = FirebaseRepo.createUser(
-                                email,
-                                password
-                            )
-                            Toast.makeText(
-                                context,
-                                "Account created successfully using ${uid?.email}!",
-                                Toast.LENGTH_LONG
-                            ).show()
-                           navController.popBackStack() // Return to login-page.
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                context,
-                                e.message ?: "Registration failed",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
+//                    scope.launch {
+//                        try {
+//                            val uid = FirebaseRepo.createUser(
+//                                email,
+//                                password
+//                            )
+//                            Toast.makeText(
+//                                context,
+//                                "Account created successfully using ${uid?.email}!",
+//                                Toast.LENGTH_LONG
+//                            ).show()
+//                           navController.popBackStack() // Return to login-page.
+//                        } catch (e: Exception) {
+//                            Toast.makeText(
+//                                context,
+//                                e.message ?: "Registration failed",
+//                                Toast.LENGTH_LONG
+//                            ).show()
+//                        }
+//                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
