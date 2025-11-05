@@ -27,7 +27,6 @@ class FavoritesViewModel @Inject constructor(
         loadFavorites()
     }
 
-    //TODO: Implement something when mock data from screen is replaced
     private fun loadFavorites() {
         viewModelScope.launch {
             _uiState.value = FavoritesUiState.Loading
