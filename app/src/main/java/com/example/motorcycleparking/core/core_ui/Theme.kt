@@ -15,20 +15,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AppColor.black,
+    primary = AppColor.teal,
     onPrimary = AppColor.white,
-    secondary = AppColor.lightGrey,
-    onSecondary = AppColor.darkGrey,
-    tertiary = AppColor.lightTeal,
-    onTertiary = AppColor.white,
-    background = AppColor.black,
-    onBackground = AppColor.white,
-    surface = AppColor.teal,
+    secondary = AppColor.darkGrey,
+    onSecondary = AppColor.white,
+    tertiary = AppColor.fadedTeal,
+    onTertiary = AppColor.black,
+    background = AppColor.white,
+    onBackground = AppColor.black,
+    surface = AppColor.lightGrey,
     onSurface = AppColor.black,
-    onSurfaceVariant = AppColor.white,
-    secondaryContainer = AppColor.fadedTeal,
-    onSecondaryContainer = AppColor.white,
-    outline = AppColor.lightGrey
+    onSurfaceVariant = AppColor.darkGrey,
+    secondaryContainer = AppColor.lightTeal,
+    onSecondaryContainer = AppColor.black,
+    outline = AppColor.darkGrey
 )
 
 // Only one theme in app.

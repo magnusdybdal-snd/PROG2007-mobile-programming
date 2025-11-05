@@ -10,9 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -20,9 +17,6 @@ import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
 import com.example.motorcycleparking.domain.mockNames
-
-import com.example.motorcycleparking.core.core_ui.GreenBackground
-import com.example.motorcycleparking.core.core_ui.composable.BasicScreen
 
 /**
  * Displays Map screen

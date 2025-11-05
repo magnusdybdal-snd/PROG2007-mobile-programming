@@ -2,11 +2,11 @@ package com.example.motorcycleparking.data
 import android.service.controls.ControlsProviderService.TAG
 import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.tasks.await
 
 object FirebaseRepo {
