@@ -1,5 +1,6 @@
-package com.example.motorcycleparking.data
-import android.service.controls.ControlsProviderService.TAG
+package com.example.motorcycleparking.data.api
+
+import android.service.controls.ControlsProviderService
 import android.util.Log
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Firebase
@@ -7,9 +8,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-
-object FirebaseRepo {
+import javax.inject.Inject
+class FirebaseRepo @Inject constructor(
+    private val firestore: FirebaseFirestore
+) {
     private val auth: FirebaseAuth = Firebase.auth
 
     suspend fun signInWithGoogle(account: GoogleSignInAccount): String {
@@ -18,7 +22,7 @@ object FirebaseRepo {
             .await()
             .user
             ?.uid
-            ?: throw Exception("Google sing-in failed")
+            ?: throw Exception("Google sign-in failed")
     }
 
     suspend fun signInWithEmailPassword(
@@ -35,14 +39,14 @@ object FirebaseRepo {
     suspend fun createUser(email: String, password: String): FirebaseUser? {
         return try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
-            Log.d(TAG, "Successfully created account")
+            Log.d(ControlsProviderService.TAG, "Successfully created account")
             result.user
         } catch (e: Exception) {
-            Log.w(TAG, "Creation failed: ", e)
+            Log.w(ControlsProviderService.TAG, "Creation failed: ", e)
             null
         }
     }
-    fun singOut(){
+    fun signOut(){
         auth.signOut()
     }
 }

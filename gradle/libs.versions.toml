@@ -13,7 +13,7 @@ firebaseBom = "34.4.0"
 firebaseFirestore = "24.10.0"
 ui = "1.9.4"
 googleMapsCompose = "6.5.2"
-hilt = "2.52"
+hilt = "2.57.2"
 hiltNavigationCompose = "1.2.0"
 kotlinxSerialization = "1.7.3"
 
