@@ -1,6 +1,5 @@
 package com.example.motorcycleparking.app
 
-import android.R
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -25,7 +24,7 @@ import com.example.motorcycleparking.core.core_navigation.NavItem
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.features.loginscreen.LoginScreen
 import com.example.motorcycleparking.features.mapscreen.MapScreen
-import com.example.motorcycleparking.features.screen2.Screen2
+import com.example.motorcycleparking.features.favoiritescreen.Screen2
 import com.example.motorcycleparking.features.screen3.Screen3
 
 @Composable
