@@ -95,3 +95,7 @@ dependencies {
 
     implementation(libs.timber)
 }
+
+hilt {
+    enableAggregatingTask = false
+}

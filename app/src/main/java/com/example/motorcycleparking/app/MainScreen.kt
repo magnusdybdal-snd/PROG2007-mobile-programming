@@ -2,10 +2,10 @@ package com.example.motorcycleparking.app
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -25,7 +25,8 @@ import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.features.favoiritescreen.FavoriteScreen
 import com.example.motorcycleparking.features.loginscreen.LoginScreen
 import com.example.motorcycleparking.features.mapscreen.MapScreen
-import com.example.motorcycleparking.features.screen3.Screen3
+import com.example.motorcycleparking.features.registerscreen.RegisterScreen
+import com.example.motorcycleparking.features.settingsscreen.SettingsScreen
 
 @Composable
 fun MainScreen(
@@ -34,8 +35,8 @@ fun MainScreen(
 ) {
     val navItemList = listOf(
         NavItem("Map",      Routes.MAP,     Icons.Default.Home),
-        NavItem("Screen 2", Routes.SCREEN2, Icons.Default.Favorite),
-        NavItem("Screen 3", Routes.SCREEN3, Icons.Default.Settings)
+        NavItem("Screen 2", Routes.FAVORITES, Icons.Default.Favorite),
+        NavItem("Screen 3", Routes.SETTINGS, Icons.Default.Settings)
     )
 
 
@@ -82,14 +83,14 @@ fun MainScreen(
             startDestination = Routes.MAP,
             modifier = modifier.padding(innerPadding)
         ) {
-            composable(Routes.MAP)     { MapScreen(Modifier, navController) }
-            composable(Routes.SCREEN2) { FavoriteScreen(  Modifier, navController, cs = MaterialTheme.colorScheme ) }
-            composable(Routes.SCREEN3) { Screen3(  Modifier, navController) }
-            composable(Routes.LOGIN)   { LoginScreen(Modifier, navController) }
+            composable(Routes.MAP)        { MapScreen(Modifier, navController) }
+            composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController, cs = MaterialTheme.colorScheme ) }
+            composable(Routes.SETTINGS)   { SettingsScreen(Modifier, navController) }
+            composable(Routes.LOGIN)      { LoginScreen(Modifier, navController) }
+            composable(Routes.REGISTER)   { RegisterScreen(Modifier, navController) }
         }
     }
 }
-
 
 private fun NavDestination?.isOnRoute(route: String): Boolean {
     if (this == null) return false

@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
@@ -25,14 +25,14 @@ import com.example.motorcycleparking.domain.mockNames
 fun MapScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    mapViewModel: MapViewModel = viewModel()
+    viewModel: MapViewModel = hiltViewModel()
 ) {
     val textFieldState = remember { TextFieldState() }
     var searchResults by remember { mutableStateOf(mockNames) }
 
     Box(modifier = modifier.fillMaxSize()) {
         // --- Google Maps Composable ---
-        GoogleMapView(mapViewModel = mapViewModel)
+        GoogleMapView(mapViewModel = viewModel)
 
         // --- Search Bar Composable ---
         SimpleSearchBar(
