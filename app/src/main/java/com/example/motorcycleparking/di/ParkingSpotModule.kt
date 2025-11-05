@@ -1,21 +1,20 @@
 package com.example.motorcycleparking.di
 
-import com.example.motorcycleparking.data.FirebaseRepo
 import com.example.motorcycleparking.data.repositories.ParkingSpotRepositoryImpl
+import com.example.motorcycleparking.domain.repositories.ParkingSpotRepository
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import com.example.motorcycleparking.domain.repositories.ParkingSpotRepository
+import dagger.Binds
 
 @Module
 @InstallIn(SingletonComponent::class)
-object ParkingSpotModule {
+abstract class ParkingSpotModule {
 
-    @Provides
+    @Binds
     @Singleton
-    fun provideParkingSpotRepository(
-        api: FirebaseRepo
-    ): ParkingSpotRepository = ParkingSpotRepositoryImpl(api)
+    abstract fun bindParkingSpotRepository(
+        impl: ParkingSpotRepositoryImpl
+    ): ParkingSpotRepository
 }

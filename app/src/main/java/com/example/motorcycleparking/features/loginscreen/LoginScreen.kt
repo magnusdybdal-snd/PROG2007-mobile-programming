@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
-import com.example.motorcycleparking.data.FirebaseRepo
+import com.example.motorcycleparking.data.api.FirebaseRepo
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
