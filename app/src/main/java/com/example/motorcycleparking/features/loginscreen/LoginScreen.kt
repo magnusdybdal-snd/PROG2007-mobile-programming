@@ -19,7 +19,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,13 +27,11 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
-import com.example.motorcycleparking.data.FirebaseRepo
-import kotlinx.coroutines.launch
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.workoutapp.core.core_ui.composable.LoadingStateView
 
 @Composable
@@ -55,10 +52,6 @@ fun LoginScreen(
             navController.navigate("map") {
                 popUpTo("login") { inclusive = true }
             }
-            GoogleSignInButton(
-                // TODO implement button functionality
-                onClick = {/*TODO*/ },
-            )
         }
     }
 

@@ -11,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
@@ -80,9 +81,6 @@ class FirebaseRepo @Inject constructor(
                     id = doc.id,
                     note = note,
                     displayAddress = addr,
-                    geoPoint = point,
-                    geoHash = hash,
-                    paid = free
                 )
                 results.add(spot)
             }

@@ -16,6 +16,8 @@ googleMapsCompose = "6.5.2"
 hilt = "2.57.2"
 hiltNavigationCompose = "1.2.0"
 kotlinxSerialization = "1.7.3"
+playServicesLocation = "21.3.0"
+timber = "5.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -41,6 +43,8 @@ ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 ## Google Maps Compose: simplifies the integration of Google Maps into Jetpack Compose by providing
 ## composable functions that wrap the Maps SDK
 google-maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "googleMapsCompose" }
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
 
 # Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
@@ -49,6 +53,7 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 
 # Kotlinx Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

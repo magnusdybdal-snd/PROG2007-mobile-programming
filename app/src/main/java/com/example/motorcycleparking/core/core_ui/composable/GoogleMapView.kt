@@ -1,55 +1,107 @@
 package com.example.motorcycleparking.core.core_ui.composable
 
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.example.motorcycleparking.features.mapscreen.MapViewModel
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
+import timber.log.Timber
 
 @Composable
-fun GoogleMapView() {
-
-    // This manages the current camera position, which includes: LatLng (center of the map),
-    // zoom level, bearing (rotation) & tilt (3D perspective).
+fun GoogleMapView(mapViewModel: MapViewModel) {
+    // Initialize the camera position state
     val cameraPositionState = rememberCameraPositionState()
+    // Obtain the current context
+    val context = LocalContext.current
+    // Observe the user's location from the ViewModel
+    val userLocation by mapViewModel.userLocation
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    // Handle permission requests for accessing fine location
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Fetch the user's location if permission is granted
+            mapViewModel.fetchUserLocation(context, fusedLocationClient)
+            mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
+        } else {
+            // Handle the case when permission is denied
+            Timber.e("Location permission was denied by the user.")
+        }
+    }
+
+    // Track if permission is granted
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    // Request the location permission when the composable is launched
+    LaunchedEffect(Unit) {
+        when (PackageManager.PERMISSION_GRANTED) {
+            // Check if the location permission is already granted
+            ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) -> {
+                // Fetch the user's location
+                mapViewModel.fetchUserLocation(context, fusedLocationClient)
+                mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
+            }
+            else -> {
+                // Request the location permission if it has not been granted
+                permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+    }
+    // Stop location updates when composable is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            mapViewModel.stopLocationUpdates(fusedLocationClient)
+        }
+    }
+
+    // Update camera position when user location changes
+    LaunchedEffect(userLocation) {
+        userLocation?.let {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(it, 15f)
+        }
+    }
 
     GoogleMap(
-        // Modifier defines how the map should be laid out in the UI.
-        // fillMaxSize() ensures it takes up all available screen space.
         modifier = Modifier.fillMaxSize(),
-
-        // Holds the current camera position state, including location (LatLng), zoom, tilt, and bearing.
-        // You can also control or animate the camera from here.
         cameraPositionState = cameraPositionState,
-
-        // MapProperties define the functional behavior of the map.
-        // This includes things like enabling the user's current location,
-        // choosing the map type (normal, satellite, terrain), traffic overlays, etc.
         properties = MapProperties(
-            // Optional extras:
-             mapType = MapType.NORMAL,
-            // isMyLocationEnabled = true,
-            // isTrafficEnabled = true,
-            // isBuildingsEnabled = true,
-            // minZoomPreference = 10f,
-            // maxZoomPreference = 20f
+            mapType = MapType.NORMAL,
+            isBuildingEnabled = true,
+            isTrafficEnabled = true,
+            isMyLocationEnabled = hasLocationPermission // blue dot
         ),
-
-        // MapUiSettings control the user interface and gestures available on the map.
-        // This includes zoom buttons, gestures (scrolling, rotating, tilting),
-        // compass visibility, and whether the "My Location" button appears.
         uiSettings = MapUiSettings(
-            // Shows the "My Location" button if permission is granted.
-            // Tapping it animates the camera to the user's current location.
-            // Optional extras:
-            // compassEnabled = true,
-            // zoomControlsEnabled = true,
-            // scrollGesturesEnabled = true,
-            // rotateGesturesEnabled = true,
-            // tiltGesturesEnabled = false
+            myLocationButtonEnabled = true,
+            zoomControlsEnabled = true
         )
     )
 }
