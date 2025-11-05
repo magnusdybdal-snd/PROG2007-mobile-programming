@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,7 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
         if (isGranted) {
             // Fetch the user's location if permission is granted
             mapViewModel.fetchUserLocation(context, fusedLocationClient)
+            mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
         } else {
             // Handle the case when permission is denied
             Timber.e("Location permission was denied by the user.")
@@ -66,11 +68,18 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
             ) -> {
                 // Fetch the user's location
                 mapViewModel.fetchUserLocation(context, fusedLocationClient)
+                mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
             }
             else -> {
                 // Request the location permission if it has not been granted
                 permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
             }
+        }
+    }
+    // Stop location updates when composable is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            mapViewModel.stopLocationUpdates(fusedLocationClient)
         }
     }
 
