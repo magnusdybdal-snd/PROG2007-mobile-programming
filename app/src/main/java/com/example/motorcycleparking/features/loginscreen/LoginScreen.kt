@@ -17,9 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,8 +30,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
 import com.example.motorcycleparking.data.FirebaseRepo
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 
 @Composable
@@ -112,8 +112,9 @@ fun LoginScreen(
             ) {
                 Text("Login")
             }
-            GoogleSignInButton( // TODO implement button functionality
-                onClick = {/*TODO*/},
+            GoogleSignInButton(
+                // TODO implement button functionality
+                onClick = {/*TODO*/ },
             )
 
             // --- Register Text ---
