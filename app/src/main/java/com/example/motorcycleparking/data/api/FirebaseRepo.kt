@@ -1,9 +1,8 @@
 package com.example.motorcycleparking.data.api
 
-import android.service.controls.ControlsProviderService
-import android.util.Log
 import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.core.utils.getNeighbors
+import com.example.motorcycleparking.domain.models.Favorites
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Firebase
@@ -15,7 +14,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Inject
+
 class FirebaseRepo @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
@@ -43,16 +44,26 @@ class FirebaseRepo @Inject constructor(
     }
 
     suspend fun createUser(email: String, password: String): FirebaseUser? {
-            val result = auth.createUserWithEmailAndPassword(email, password).await()
-            Log.d(ControlsProviderService.TAG, "Successfully created account")
-            return result.user
+        val result = auth.createUserWithEmailAndPassword(email, password).await()
+        val user = result.user ?: return null
+        Timber.tag("UserCreation").d("Successfully created account")
+        try {
+            val userData = hashMapOf(
+                "favorites" to emptyList<String>()
+            )
+
+            db.collection("users").document(user.uid).set(userData).await()
+        } catch (e: Exception) {
+            Timber.tag("UserCreation").e(e, "Failed to create user in Firestore document")
+        }
+        return user
     }
 
     fun singOut() {
         auth.signOut()
     }
 
-    suspend fun getParkingspotsNearYou(
+    suspend fun getParkingSpotsNearYou(
         geoPoint: GeoPoint,
         precision: Int = 6
     ): MutableList<ParkingSpot> {
@@ -85,9 +96,35 @@ class FirebaseRepo @Inject constructor(
                 results.add(spot)
             }
         } catch (e: Exception) {
-            Log.e("FirestoreError", "Error fetching from Firestore", e)
+            Timber.tag("FirestoreError").e(e, "Error fetching from Firestore")
         }
 
         return results
+    }
+
+    suspend fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
+    }
+
+    suspend fun toggleFavorite(userId: String, spotId: String) {
+        val userRef = db.collection("users").document(userId)
+        val snapshot = userRef.get().await()
+
+        val user = snapshot.toObject(Favorites::class.java) ?: Favorites()
+        val favorites = user.favorites?.toMutableList() ?: mutableListOf<String>()
+
+        if (favorites.contains(spotId)) {
+            favorites.remove(spotId)
+        } else {
+            favorites.add(spotId)
+        }
+
+        userRef.update("favorites", favorites).await()
+        Timber.tag("UpdatedFaves").d("a new version of objects just dropped")
+    }
+
+    suspend fun getFavorites(userId: String): List<ParkingSpot> {
+        // TODO: Implement
+        return emptyList()
     }
 }

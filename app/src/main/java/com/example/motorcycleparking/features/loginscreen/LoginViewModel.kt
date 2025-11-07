@@ -31,6 +31,7 @@ class LoginViewModel @Inject constructor(
 
             try {
                 val uid = firebaseRepo.signInWithEmailPassword(email, password)
+                firebaseRepo.toggleFavorite(uid, "Nm9NhSyRYP0ZpSOk15pU")
                 Log.d(TAG, "Successfully logged in as $uid")
                 _uiState.value = LoginUiState(
                     isSignedIn = true,
@@ -44,6 +45,7 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
+
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
