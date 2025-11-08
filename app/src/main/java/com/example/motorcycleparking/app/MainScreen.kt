@@ -85,7 +85,7 @@ fun MainScreen(
         ) {
             composable(Routes.MAP)        { MapScreen(Modifier, navController) }
             composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController, cs = MaterialTheme.colorScheme ) }
-            composable(Routes.SETTINGS)   { SettingsScreen({navController.popBackStack()}) }
+            composable(Routes.SETTINGS)   { SettingsScreen({ navController.popBackStack() } ) }
             composable(Routes.LOGIN)      { LoginScreen(Modifier, navController) }
             composable(Routes.REGISTER)   { RegisterScreen(Modifier, navController) }
         }

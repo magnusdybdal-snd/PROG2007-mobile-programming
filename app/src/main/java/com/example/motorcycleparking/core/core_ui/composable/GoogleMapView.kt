@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.example.motorcycleparking.features.mapscreen.MapViewModel
+import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.GoogleMap
@@ -25,7 +27,10 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import timber.log.Timber
 
 @Composable
-fun GoogleMapView(mapViewModel: MapViewModel) {
+fun GoogleMapView(
+    mapViewModel: MapViewModel,
+    settingsViewModel: SettingsViewModel
+) {
     // Initialize the camera position state
     val cameraPositionState = rememberCameraPositionState()
     // Obtain the current context
@@ -34,13 +39,15 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
     val userLocation by mapViewModel.userLocation
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
+    // Observe settings state
+    val settingsState by settingsViewModel.settingsState.collectAsState()
+
     // Handle permission requests for accessing fine location
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             // Fetch the user's location if permission is granted
-            mapViewModel.fetchUserLocation(context, fusedLocationClient)
             mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
         } else {
             // Handle the case when permission is denied
@@ -67,7 +74,6 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) -> {
                 // Fetch the user's location
-                mapViewModel.fetchUserLocation(context, fusedLocationClient)
                 mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
             }
             else -> {
@@ -95,13 +101,14 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
         cameraPositionState = cameraPositionState,
         properties = MapProperties(
             mapType = MapType.NORMAL,
-            isBuildingEnabled = true,
-            isTrafficEnabled = true,
-            isMyLocationEnabled = hasLocationPermission // blue dot
+            isBuildingEnabled = settingsState.show3DBuildings,
+            isTrafficEnabled = settingsState.showTraffic,
+            isMyLocationEnabled = hasLocationPermission, // blue dot
         ),
         uiSettings = MapUiSettings(
-            myLocationButtonEnabled = true,
-            zoomControlsEnabled = true
+            myLocationButtonEnabled = settingsState.showMyLocationButton,
+            zoomControlsEnabled = settingsState.showZoomControls,
+
         )
     )
 }
