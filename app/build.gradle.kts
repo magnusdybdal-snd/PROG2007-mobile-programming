@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.foundation:foundation:1.5.4")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
+
 
     // Firebase
     implementation(platform(libs.firebase.bom))

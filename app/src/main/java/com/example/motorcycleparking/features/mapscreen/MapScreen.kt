@@ -27,7 +27,7 @@ fun MapScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     viewModel: MapViewModel = hiltViewModel(),
-    settingsViewModel: SettingsViewModel = hiltViewModel()
+    settingsViewModel: SettingsViewModel
 ) {
     val textFieldState = remember { TextFieldState() }
     var searchResults by remember { mutableStateOf(mockNames) }

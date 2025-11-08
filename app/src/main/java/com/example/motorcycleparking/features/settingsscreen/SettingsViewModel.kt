@@ -1,12 +1,17 @@
 package com.example.motorcycleparking.features.settingsscreen
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+// Data class for all settings
 data class SettingsState(
     // Map Settings
     val showTraffic: Boolean = true,
@@ -29,106 +34,94 @@ data class SettingsState(
     val dataSaverMode: Boolean = false
 )
 
-class SettingsViewModel : ViewModel() {
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context
+) : ViewModel() {
 
-    private val _settingsState = MutableStateFlow(SettingsState())
-    val settingsState: StateFlow<SettingsState> = _settingsState.asStateFlow()
+    private val repository = SettingsRepository(context)
+
+    // Observe settings from repository
+    val settingsState: StateFlow<SettingsState> = repository.settingsFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = SettingsState()
+        )
 
     // Map Settings
     fun updateShowTraffic(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(showTraffic = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateShowTraffic(enabled)
         }
     }
 
     fun update3DBuildings(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(show3DBuildings = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.update3DBuildings(enabled)
         }
     }
 
     fun updateMyLocationButton(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(showMyLocationButton = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateMyLocationButton(enabled)
         }
     }
 
     fun updateZoomControls(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(showZoomControls = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateZoomControls(enabled)
         }
     }
 
     // Location Settings
     fun updateAutoCenterOnLocation(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(autoCenterOnLocation = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateAutoCenterOnLocation(enabled)
         }
     }
 
     fun updateContinuousLocationUpdates(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(continuousLocationUpdates = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateContinuousLocationUpdates(enabled)
         }
     }
 
     // Parking Settings
     fun updateParkingNotifications(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(parkingNotifications = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateParkingNotifications(enabled)
         }
     }
 
     fun updateShowFavoritesOnly(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(showFavoritesOnly = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateShowFavoritesOnly(enabled)
         }
     }
 
     fun updateAutoFilterAvailable(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(autoFilterAvailable = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateAutoFilterAvailable(enabled)
         }
     }
 
     // General Settings
     fun updateDarkMode(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(darkMode = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateDarkMode(enabled)
         }
     }
 
     fun updateHapticFeedback(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(hapticFeedback = enabled)
-            // TODO: Save to DataStore or SharedPreferences
+            repository.updateHapticFeedback(enabled)
         }
     }
 
     fun updateDataSaverMode(enabled: Boolean) {
         viewModelScope.launch {
-            _settingsState.value = _settingsState.value.copy(dataSaverMode = enabled)
-            // TODO: Save to DataStore or SharedPreferences
-        }
-    }
-
-    // Load settings from persistent storage
-    fun loadSettings() {
-        viewModelScope.launch {
-            // TODO: Load from DataStore or SharedPreferences
-            // Example:
-            // val savedSettings = settingsRepository.getSettings()
-            // _settingsState.value = savedSettings
+            repository.updateDataSaverMode(enabled)
         }
     }
 }

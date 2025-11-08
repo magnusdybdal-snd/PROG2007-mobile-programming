@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -27,11 +28,13 @@ import com.example.motorcycleparking.features.loginscreen.LoginScreen
 import com.example.motorcycleparking.features.mapscreen.MapScreen
 import com.example.motorcycleparking.features.registerscreen.RegisterScreen
 import com.example.motorcycleparking.features.settingsscreen.SettingsScreen
+import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
-    navController: NavHostController
+    navController: NavHostController,
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val navItemList = listOf(
         NavItem("Map",      Routes.MAP,     Icons.Default.Home),
@@ -83,9 +86,17 @@ fun MainScreen(
             startDestination = Routes.MAP,
             modifier = modifier.padding(innerPadding)
         ) {
-            composable(Routes.MAP)        { MapScreen(Modifier, navController) }
+            composable(Routes.MAP)        { MapScreen(
+                Modifier,
+                navController,
+                settingsViewModel =  settingsViewModel)
+            }
             composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController, cs = MaterialTheme.colorScheme ) }
-            composable(Routes.SETTINGS)   { SettingsScreen({ navController.popBackStack() } ) }
+            composable(Routes.SETTINGS)   { SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = settingsViewModel
+                )
+            }
             composable(Routes.LOGIN)      { LoginScreen(Modifier, navController) }
             composable(Routes.REGISTER)   { RegisterScreen(Modifier, navController) }
         }

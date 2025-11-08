@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import androidx.compose.runtime.getValue
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
