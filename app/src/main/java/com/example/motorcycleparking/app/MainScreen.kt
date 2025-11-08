@@ -2,10 +2,10 @@ package com.example.motorcycleparking.app
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Icon
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -85,7 +85,7 @@ fun MainScreen(
         ) {
             composable(Routes.MAP)        { MapScreen(Modifier, navController) }
             composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController, cs = MaterialTheme.colorScheme ) }
-            composable(Routes.SETTINGS)   { SettingsScreen(Modifier, navController) }
+            composable(Routes.SETTINGS)   { SettingsScreen({navController.popBackStack()}) }
             composable(Routes.LOGIN)      { LoginScreen(Modifier, navController) }
             composable(Routes.REGISTER)   { RegisterScreen(Modifier, navController) }
         }
