@@ -15,9 +15,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Traffic
 import androidx.compose.material.icons.filled.Update
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +28,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.motorcycleparking.core.core_ui.composable.SettingToggleItem
-import com.example.motorcycleparking.core.core_ui.composable.SettingsSection
+import com.example.motorcycleparking.core.core_ui.composable.settings.SettingToggleItem
+import com.example.motorcycleparking.core.core_ui.composable.settings.SettingsSection
+import com.example.motorcycleparking.core.core_ui.composable.settings.SettingsDivider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,11 +83,9 @@ fun SettingsScreen(
                     onCheckedChange = { viewModel.updateMyLocationButton(it) }
                 )
 
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    thickness = DividerDefaults.Thickness,
-                    color = DividerDefaults.color
-                )
+
+                SettingsDivider() // visible divider-line
+
 
                 // Location Settings Section
                 SettingsSection(title = "Location Settings") {
@@ -109,11 +106,7 @@ fun SettingsScreen(
                     )
                 }
 
-                HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    thickness = DividerDefaults.Thickness,
-                    color = DividerDefaults.color
-                )
+                SettingsDivider() // visible divider-line
 
                 // Parking Settings Section
                 SettingToggleItem(
@@ -125,11 +118,8 @@ fun SettingsScreen(
                 )
             }
 
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = DividerDefaults.Thickness,
-                color = DividerDefaults.color
-            )
+
+            SettingsDivider() // visible divider-line
 
             // General Settings Section
             SettingsSection(title = "General Settings") {

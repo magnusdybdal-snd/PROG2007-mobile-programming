@@ -1,0 +1,16 @@
+package com.example.motorcycleparking.core.core_ui.composable.settings
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun SettingsDivider(){
+    HorizontalDivider(
+    modifier = Modifier.padding(vertical = 8.dp),
+    thickness = DividerDefaults.Thickness,
+    color = DividerDefaults.color
+)}

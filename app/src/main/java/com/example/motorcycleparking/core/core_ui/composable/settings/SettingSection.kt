@@ -1,4 +1,4 @@
-package com.example.motorcycleparking.core.core_ui.composable
+package com.example.motorcycleparking.core.core_ui.composable.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
