@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,8 +53,6 @@ fun ParkingSpotInfoPopup(
     onToggleFavorite: () -> Unit = {},
     onNavigate: () -> Unit = {}
 ) {
-    val cs = MaterialTheme.colorScheme
-
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -167,7 +165,7 @@ fun ParkingSpotInfoPopup(
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
-                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Outlined.Star,
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.Favorite,
                             contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                             modifier = Modifier.size(18.dp)
                         )
