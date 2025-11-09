@@ -125,13 +125,11 @@ fun GoogleMapView(
         cameraPositionState = cameraPositionState,
         properties = MapProperties(
             mapType = MapType.NORMAL,
-            isBuildingEnabled = settingsState.show3DBuildings,
             isTrafficEnabled = settingsState.showTraffic,
             isMyLocationEnabled = hasLocationPermission // blue dot
         ),
         uiSettings = MapUiSettings(
             myLocationButtonEnabled = settingsState.showMyLocationButton,
-            zoomControlsEnabled = settingsState.showZoomControls
         )
     )
 }

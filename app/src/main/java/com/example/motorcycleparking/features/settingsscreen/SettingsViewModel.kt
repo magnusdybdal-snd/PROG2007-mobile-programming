@@ -15,23 +15,17 @@ import javax.inject.Inject
 data class SettingsState(
     // Map Settings
     val showTraffic: Boolean = true,
-    val show3DBuildings: Boolean = true,
     val showMyLocationButton: Boolean = true,
-    val showZoomControls: Boolean = true,
 
     // Location Settings
     val autoCenterOnLocation: Boolean = true,
     val continuousLocationUpdates: Boolean = true,
 
     // Parking Settings
-    val parkingNotifications: Boolean = true,
     val showFavoritesOnly: Boolean = false,
-    val autoFilterAvailable: Boolean = true,
 
     // General Settings
     val darkMode: Boolean = false,
-    val hapticFeedback: Boolean = true,
-    val dataSaverMode: Boolean = false
 )
 
 @HiltViewModel
@@ -56,21 +50,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun update3DBuildings(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.update3DBuildings(enabled)
-        }
-    }
-
     fun updateMyLocationButton(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateMyLocationButton(enabled)
-        }
-    }
-
-    fun updateZoomControls(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.updateZoomControls(enabled)
         }
     }
 
@@ -88,21 +70,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     // Parking Settings
-    fun updateParkingNotifications(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.updateParkingNotifications(enabled)
-        }
-    }
-
     fun updateShowFavoritesOnly(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateShowFavoritesOnly(enabled)
-        }
-    }
-
-    fun updateAutoFilterAvailable(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.updateAutoFilterAvailable(enabled)
         }
     }
 
@@ -110,18 +80,6 @@ class SettingsViewModel @Inject constructor(
     fun updateDarkMode(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateDarkMode(enabled)
-        }
-    }
-
-    fun updateHapticFeedback(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.updateHapticFeedback(enabled)
-        }
-    }
-
-    fun updateDataSaverMode(enabled: Boolean) {
-        viewModelScope.launch {
-            repository.updateDataSaverMode(enabled)
         }
     }
 }
