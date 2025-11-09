@@ -187,7 +187,7 @@ fun ParkingSpotInfoPopup(
 }
 
 // Preview with sample data
-@Preview(showBackground = true, backgroundColor = 0xFF121212)
+@Preview(showBackground = true)
 @Composable
 fun ParkingSpotInfoPopupPreview() {
     MaterialTheme {
@@ -200,50 +200,6 @@ fun ParkingSpotInfoPopupPreview() {
                 longitude = 10.7522,
                 free = false,
                 note = "Located near the shopping center. Available 24/7. Limited spaces during weekdays."
-            ),
-            isFavorite = false,
-            onDismiss = {},
-            onToggleFavorite = {},
-            onNavigate = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF121212)
-@Composable
-fun ParkingSpotInfoPopupPaidPreview() {
-    MaterialTheme {
-        ParkingSpotInfoPopup(
-            parkingSpot = ParkingSpot(
-                name = "Park & Ride Lot",
-                id = "preview2",
-                displayAddress = "456 Oak Avenue, North Side",
-                latitude = 59.9139,
-                longitude = 10.7522,
-                free = false,
-                note = null
-            ),
-            isFavorite = true,
-            onDismiss = {},
-            onToggleFavorite = {},
-            onNavigate = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF121212)
-@Composable
-fun ParkingSpotInfoPopupNoNotesPreview() {
-    MaterialTheme {
-        ParkingSpotInfoPopup(
-            parkingSpot = ParkingSpot(
-                name = "Quick Stop Parking",
-                id = "preview3",
-                displayAddress = "789 Elm Street",
-                latitude = 59.9139,
-                longitude = 10.7522,
-                free = true,
-                note = null
             ),
             isFavorite = false,
             onDismiss = {},
