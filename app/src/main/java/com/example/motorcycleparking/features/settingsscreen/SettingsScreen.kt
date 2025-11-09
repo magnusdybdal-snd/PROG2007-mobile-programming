@@ -37,12 +37,14 @@ import androidx.compose.ui.unit.dp
 import com.example.motorcycleparking.core.core_ui.composable.settings.SettingToggleItem
 import com.example.motorcycleparking.core.core_ui.composable.settings.SettingsDivider
 import com.example.motorcycleparking.core.core_ui.composable.settings.SettingsSection
+import com.example.motorcycleparking.data.api.FirebaseRepo
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onSignOut: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     viewModel: SettingsViewModel,
 ) {
     val settingsState by viewModel.settingsState.collectAsState()
@@ -52,7 +54,8 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Navigate back"
@@ -127,7 +130,6 @@ fun SettingsScreen(
                 }
             }
 
-
             SettingsDivider() // visible divider-line
 
             // General Settings Section
@@ -141,11 +143,15 @@ fun SettingsScreen(
                 )
 
             }
+
             SettingsDivider() // visible divider-line
 
             SettingsSection(title = "Account Settings") {
                 Button( // Sign out button
-                    onClick = onSignOut,
+                    onClick ={
+                        viewModel.signOut() // sign user out
+                        onNavigateToLogin() // Navigate to login screen
+                             },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),

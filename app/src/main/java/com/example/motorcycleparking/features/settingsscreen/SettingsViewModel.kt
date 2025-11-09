@@ -3,6 +3,7 @@ package com.example.motorcycleparking.features.settingsscreen
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.motorcycleparking.data.api.FirebaseRepo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,7 +31,8 @@ data class SettingsState(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val firebaseRepo: FirebaseRepo
 ) : ViewModel() {
 
     private val repository = SettingsRepository(context)
@@ -81,5 +83,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.updateDarkMode(enabled)
         }
+    }
+
+    fun signOut(){
+        firebaseRepo.signOut()
     }
 }

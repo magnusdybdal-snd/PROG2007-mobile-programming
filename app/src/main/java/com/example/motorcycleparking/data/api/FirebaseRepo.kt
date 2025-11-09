@@ -48,7 +48,7 @@ class FirebaseRepo @Inject constructor(
             return result.user
     }
 
-    fun singOut() {
+    fun signOut() {
         auth.signOut()
     }
 
