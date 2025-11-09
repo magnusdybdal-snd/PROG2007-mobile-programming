@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -94,7 +95,17 @@ fun MainScreen(
             composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController, cs = MaterialTheme.colorScheme ) }
             composable(Routes.SETTINGS)   { SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                viewModel = settingsViewModel
+                onSignOut = {
+                    // Add your sign-out logic here
+                    // For example:
+                    // - Clear user session
+                    // - Sign out from Firebase Auth
+                    // - Navigate to login screen
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.MAP) { inclusive = true }
+                    }
+                },
+                viewModel = settingsViewModel,
                 )
             }
             composable(Routes.LOGIN)      { LoginScreen(Modifier, navController) }
