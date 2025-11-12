@@ -2,7 +2,7 @@ package com.example.motorcycleparking.data.api
 
 import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.core.utils.getNeighbors
-import com.example.motorcycleparking.data.api.dto.Favorites
+import com.example.motorcycleparking.data.api.dto.FavoritesDto
 import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -134,8 +134,8 @@ class FirebaseRepo @Inject constructor(
                 .get()
                 .await()
 
-            val favoriteIds = snapshot.toObject(Favorites::class.java)
-                ?.favorites
+            val favoriteIds = snapshot.toObject(FavoritesDto::class.java)
+                ?.ids
                 .orEmpty()
 
             if (favoriteIds.isEmpty()) return@coroutineScope emptyList()
@@ -174,4 +174,5 @@ class FirebaseRepo @Inject constructor(
             emptyList()
         }
     }
+
 }
