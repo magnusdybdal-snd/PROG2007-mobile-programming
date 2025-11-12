@@ -2,7 +2,8 @@ package com.example.motorcycleparking.data.api
 
 import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.core.utils.getNeighbors
-import com.example.motorcycleparking.domain.models.Favorites
+import com.example.motorcycleparking.data.api.dto.Favorites
+import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Firebase
@@ -12,6 +13,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.async
@@ -70,43 +72,37 @@ class FirebaseRepo @Inject constructor(
     suspend fun getParkingSpotsNearYou(
         lat: Double,
         lon: Double,
-        precision: Int = 6
-    ): List<ParkingSpot> {
+        precision: Int = 6,
+    ): Result<List<ParkingSpotDto>> = try {
         val geoHash = encodeGeohash(lat, lon, precision)
-        val geoHashNeighbors = getNeighbors(geoHash)
+        val geoHashNeighbors = getNeighbors(geoHash) + geoHash
 
         val results = coroutineScope {
             geoHashNeighbors.map { hash ->
                 async {
-                    try {
-                        val docs = db.collection("parkingspots")
-                            .orderBy("geo_hash")
-                            .startAt(hash)
-                            .endAt(hash + "\uf8ff")
-                            .get()
-                            .await()
-
-                        docs.documents.mapNotNull { doc ->
-                            val geoPoint = doc.getGeoPoint("geo_point") ?: return@mapNotNull null
-                            ParkingSpot(
-                                name = doc.getString("name") ?: "",
+                    db.collection("parkingspots")
+                        .orderBy("geo_hash")
+                        .startAt(hash)
+                        .endAt(hash + "\uf8ff")
+                        .get()
+                        .await()
+                        .mapNotNull { doc ->
+                            ParkingSpotDto(
+                                name = doc.getString("name").orEmpty(),
                                 id = doc.id,
-                                note = doc.getString("note") ?: "",
-                                displayAddress = doc.getString("display_address") ?: "",
-                                latitude = geoPoint.latitude,
-                                longitude = geoPoint.longitude,
-                                free = doc.getBoolean("free")
+                                note = doc.getString("note").orEmpty(),
+                                displayAddress = doc.getString("display_address").orEmpty(),
+                                geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                                free = doc.getBoolean("free") ?: false
                             )
                         }
-                    } catch (e: Exception) {
-                        Timber.tag("FirestoreError")
-                            .e(e, "Error fetching from Firestore for hash: $hash")
-                        emptyList()
-                    }
                 }
             }.awaitAll().flatten()
         }
-        return results
+        Result.success(results)
+    } catch (e: Exception) {
+        Timber.tag("ParkingFetch").e(e, "Error fetching parking spots")
+        Result.failure(e)
     }
 
     suspend fun getCurrentUserId(): String? {
@@ -177,18 +173,5 @@ class FirebaseRepo @Inject constructor(
             Timber.tag("FirestoreError").e(e, "Error fetching favorites for user: $userId")
             emptyList()
         }
-    }
-
-    suspend fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid
-    }
-
-    suspend fun toggleFavorite(userId: String, spotId: String) {
-        // TODO: Implement
-    }
-
-    suspend fun getFavorites(userId: String): List<ParkingSpot> {
-        // TODO: Implement
-        return emptyList()
     }
 }

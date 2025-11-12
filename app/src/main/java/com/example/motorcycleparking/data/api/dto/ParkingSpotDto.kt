@@ -8,9 +8,8 @@ data class ParkingSpotDto(
     val note: String = "",
     val displayAddress: String = "",
     val geoPoint: GeoPoint = GeoPoint(0.0, 0.0),
-    val paid: Boolean = false,
-    val image: String = "" // TODO: Metadata correct?
+    val free: Boolean = false,
 ) {
-    constructor() : this("", "", "", "", GeoPoint(0.0, 0.0), false, "")
+    constructor() : this("", "", "", "", GeoPoint(0.0, 0.0), false)
 }
 
