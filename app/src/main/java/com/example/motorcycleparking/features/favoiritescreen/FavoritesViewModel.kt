@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.motorcycleparking.data.api.FirebaseRepo
+import com.example.motorcycleparking.domain.usecases.ToggleFavoriteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
-    private val firebaseRepo: FirebaseRepo
+    private val firebaseRepo: FirebaseRepo,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
     companion object {
@@ -25,6 +27,16 @@ class FavoritesViewModel @Inject constructor(
 
     init {
         loadFavorites()
+        observeFavoriteChanges()
+    }
+
+    private fun observeFavoriteChanges() {
+        viewModelScope.launch {
+            toggleFavoriteUseCase.favoritesChanged.collect {
+                Log.d(TAG, "Favorites changed - Reloading")
+                loadFavorites()
+            }
+        }
     }
 
     private fun loadFavorites() {
