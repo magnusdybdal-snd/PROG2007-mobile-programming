@@ -38,21 +38,22 @@ fun ParkingSpotCard(
     modifier: Modifier = Modifier,
     parkingSpot: ParkingSpot,
     onFavoriteClick: () -> Unit = {},
-    onInfoClick: () -> Unit = {},
     cs: ColorScheme = MaterialTheme.colorScheme
 ) {
     val context = LocalContext.current
     var showNavigationDialog by remember { mutableStateOf(false) }
 
-    // Show confirmation dialog
+    // Show confirmation dialog with parking spot name
     if (showNavigationDialog) {
         NavigationConfirmationDialog(
             parkingSpotName = parkingSpot.name,
             onConfirm = {
+                // Get geo position of parking spot
                 showNavigationDialog = false
                 val lat = parkingSpot.latitude
                 val lon = parkingSpot.longitude
                 if (lat != null && lon != null) {
+                    // Open google maps with location from parking spot
                     openGoogleMapsNavigation(
                         context = context,
                         latitude = lat,
@@ -108,7 +109,7 @@ fun ParkingSpotCard(
 
                 PaidStatus(parkingSpot)
             }
-
+            // Directions icon for navigation on google maps
             IconButton(
                 onClick = {
                     showNavigationDialog = true
@@ -120,7 +121,7 @@ fun ParkingSpotCard(
                     tint = cs.primary
                 )
             }
-            // Right side: Heart icon
+            // Heart icon to toggle favorite
             IconButton(
                 onClick = onFavoriteClick
             ) {
