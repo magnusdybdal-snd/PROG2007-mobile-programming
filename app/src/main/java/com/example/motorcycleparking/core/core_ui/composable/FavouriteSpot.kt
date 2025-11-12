@@ -111,15 +111,7 @@ fun ParkingSpotCard(
 
             IconButton(
                 onClick = {
-                    val lat = parkingSpot.latitude
-                    val lon = parkingSpot.longitude
-                    if (lat != null && lon != null) {
-                        openGoogleMapsNavigation(
-                            context = context,
-                            latitude = lat,
-                            longitude = lon,
-                        )
-                    }
+                    showNavigationDialog = true
                 }
             ) {
                 Icon(
