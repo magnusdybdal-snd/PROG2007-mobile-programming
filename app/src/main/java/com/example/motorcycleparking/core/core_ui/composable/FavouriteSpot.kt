@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
@@ -81,7 +83,7 @@ fun ParkingSpotCard(
                 onClick = onInfoClick
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Info,
+                    imageVector = Icons.Filled.Directions,
                     contentDescription = "information",
                     tint = cs.primary
                 )
