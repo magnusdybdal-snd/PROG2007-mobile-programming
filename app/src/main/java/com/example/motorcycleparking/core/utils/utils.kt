@@ -156,11 +156,11 @@ fun openGoogleMapsNavigation(
     context: Context,
     latitude: Double,
     longitude: Double,
-    directNaviagtion: Boolean = true
+    directNavigation: Boolean = true
 ) {
     try {
         // Create URI for navigation
-        val uri = if (directNaviagtion) {
+        val uri = if (directNavigation) {
             // Start navigation immediately (for favorites)
             "google.navigation:q=$latitude,$longitude".toUri()
         } else {
