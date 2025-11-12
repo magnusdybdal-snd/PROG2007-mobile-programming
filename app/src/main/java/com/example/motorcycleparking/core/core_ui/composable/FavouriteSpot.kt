@@ -42,8 +42,19 @@ fun ParkingSpotCard(
 ) {
     val context = LocalContext.current
     var showNavigationDialog by remember { mutableStateOf(false) }
+    val showFavoriteDialog by remember { mutableStateOf(false) }
 
-    // Show confirmation dialog with parking spot name
+    // Show confirmation dialog when toggling favorite
+    if (showFavoriteDialog) {
+        FavoriteToggleDialog(
+            parkingSpotName = parkingSpot.name,
+            onConfirm = {
+                showFavoriteDialog = false
+            }
+        )
+    }
+
+    // Show confirmation dialog when navigating
     if (showNavigationDialog) {
         NavigationConfirmationDialog(
             parkingSpotName = parkingSpot.name,
@@ -123,7 +134,7 @@ fun ParkingSpotCard(
             }
             // Heart icon to toggle favorite
             IconButton(
-                onClick = onFavoriteClick
+                onClick = showFavoriteToggle = true
             ) {
                 Icon(
                     imageVector = Icons.Filled.Favorite,
