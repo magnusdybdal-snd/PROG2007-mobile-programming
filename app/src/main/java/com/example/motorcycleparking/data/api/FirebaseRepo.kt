@@ -63,7 +63,7 @@ class FirebaseRepo @Inject constructor(
         return user
     }
 
-    fun singOut() {
+    fun signOut() {
         auth.signOut()
     }
 
@@ -177,5 +177,18 @@ class FirebaseRepo @Inject constructor(
             Timber.tag("FirestoreError").e(e, "Error fetching favorites for user: $userId")
             emptyList()
         }
+    }
+
+    suspend fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
+    }
+
+    suspend fun toggleFavorite(userId: String, spotId: String) {
+        // TODO: Implement
+    }
+
+    suspend fun getFavorites(userId: String): List<ParkingSpot> {
+        // TODO: Implement
+        return emptyList()
     }
 }

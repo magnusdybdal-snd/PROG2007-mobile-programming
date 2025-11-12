@@ -14,7 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.motorcycleparking.features.mapscreen.MapViewModel
+import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.GoogleMap
@@ -25,7 +27,10 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import timber.log.Timber
 
 @Composable
-fun GoogleMapView(mapViewModel: MapViewModel) {
+fun GoogleMapView(
+    mapViewModel: MapViewModel,
+    settingsViewModel: SettingsViewModel
+) {
     // Initialize the camera position state
     val cameraPositionState = rememberCameraPositionState()
     // Obtain the current context
@@ -34,6 +39,9 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
     val userLocation by mapViewModel.userLocation
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
+    // Observe settings state - using collectAsStateWithLifecycle
+    val settingsState by settingsViewModel.settingsState.collectAsStateWithLifecycle()
+
     // Handle permission requests for accessing fine location
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -41,7 +49,11 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
         if (isGranted) {
             // Fetch the user's location if permission is granted
             mapViewModel.fetchUserLocation(context, fusedLocationClient)
-            mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
+
+            // Start continuous location updates only if enabled in settings
+            if (settingsState.continuousLocationUpdates) {
+                mapViewModel.startLocationUpdates(context, fusedLocationClient)
+            }
         } else {
             // Handle the case when permission is denied
             Timber.e("Location permission was denied by the user.")
@@ -68,7 +80,11 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
             ) -> {
                 // Fetch the user's location
                 mapViewModel.fetchUserLocation(context, fusedLocationClient)
-                mapViewModel.startLocationUpdates(context, fusedLocationClient) // Start continuous location updates
+
+                // Start continuous location updates only if enabled in settings
+                if (settingsState.continuousLocationUpdates) {
+                    mapViewModel.startLocationUpdates(context, fusedLocationClient)
+                }
             }
             else -> {
                 // Request the location permission if it has not been granted
@@ -76,6 +92,18 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
             }
         }
     }
+
+    // React to changes in continuous location updates setting
+    LaunchedEffect(settingsState.continuousLocationUpdates) {
+        if (hasLocationPermission) {
+            if (settingsState.continuousLocationUpdates) {
+                mapViewModel.startLocationUpdates(context, fusedLocationClient)
+            } else {
+                mapViewModel.stopLocationUpdates(fusedLocationClient)
+            }
+        }
+    }
+
     // Stop location updates when composable is disposed
     DisposableEffect(Unit) {
         onDispose {
@@ -83,10 +111,12 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
         }
     }
 
-    // Update camera position when user location changes
-    LaunchedEffect(userLocation) {
-        userLocation?.let {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(it, 15f)
+    // Update camera position when user location changes and auto-center is enabled
+    LaunchedEffect(userLocation, settingsState.autoCenterOnLocation) {
+        if (settingsState.autoCenterOnLocation) {
+            userLocation?.let {
+                cameraPositionState.position = CameraPosition.fromLatLngZoom(it, 15f)
+            }
         }
     }
 
@@ -95,13 +125,11 @@ fun GoogleMapView(mapViewModel: MapViewModel) {
         cameraPositionState = cameraPositionState,
         properties = MapProperties(
             mapType = MapType.NORMAL,
-            isBuildingEnabled = true,
-            isTrafficEnabled = true,
+            isTrafficEnabled = settingsState.showTraffic,
             isMyLocationEnabled = hasLocationPermission // blue dot
         ),
         uiSettings = MapUiSettings(
-            myLocationButtonEnabled = true,
-            zoomControlsEnabled = true
+            myLocationButtonEnabled = settingsState.showMyLocationButton,
         )
     )
 }

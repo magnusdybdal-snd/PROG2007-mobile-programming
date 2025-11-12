@@ -16,7 +16,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -75,29 +74,7 @@ fun ParkingSpotCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Surface(
-                    color = if (parkingSpot.free == false)
-                        cs.errorContainer
-                    else
-                        cs.primaryContainer,
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = when (parkingSpot.free) {
-                            false -> "Paid"
-                            null ->  "Unknown"
-                            else ->  "Free"
-                        },
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = when (parkingSpot.free) {
-                            false -> cs.onErrorContainer
-                            null  -> cs.onPrimaryContainer
-                            else  -> cs.onPrimaryContainer
-                        }
-                    )
-                }
+                PaidStatus(parkingSpot)
             }
 
             IconButton(

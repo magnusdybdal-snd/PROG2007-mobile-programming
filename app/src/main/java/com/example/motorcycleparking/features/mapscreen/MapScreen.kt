@@ -20,19 +20,24 @@ import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
 import com.example.motorcycleparking.domain.mockNames
+import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    viewModel: MapViewModel = hiltViewModel()
+    viewModel: MapViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel
 ) {
     val textFieldState = remember { TextFieldState() }
     var searchResults by remember { mutableStateOf(mockNames) }
 
     Box(modifier = modifier.fillMaxSize()) {
         // --- Google Maps Composable ---
-        GoogleMapView(mapViewModel = viewModel)
+        GoogleMapView(
+            mapViewModel = viewModel,
+            settingsViewModel = settingsViewModel
+        )
 
         // --- Search Bar Composable ---
         SimpleSearchBar(
