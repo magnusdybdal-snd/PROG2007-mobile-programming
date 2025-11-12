@@ -10,9 +10,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import javax.inject.Inject
@@ -64,41 +68,44 @@ class FirebaseRepo @Inject constructor(
     }
 
     suspend fun getParkingSpotsNearYou(
-        geoPoint: GeoPoint,
+        lat: Double,
+        lon: Double,
         precision: Int = 6
-    ): MutableList<ParkingSpot> {
-        val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
+    ): List<ParkingSpot> {
+        val geoHash = encodeGeohash(lat, lon, precision)
         val geoHashNeighbors = getNeighbors(geoHash)
 
-        val results = mutableListOf<ParkingSpot>()
+        val results = coroutineScope {
+            geoHashNeighbors.map { hash ->
+                async {
+                    try {
+                        val docs = db.collection("parkingspots")
+                            .orderBy("geo_hash")
+                            .startAt(hash)
+                            .endAt(hash + "\uf8ff")
+                            .get()
+                            .await()
 
-        try {
-            val docs = db.collection("parkingspots")
-                .orderBy("geo_hash")
-                .startAt(geoHash)
-                .endAt(geoHash + "\uf8ff")
-                .get()
-                .await()
-
-            for (doc in docs) {
-                val point = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0)
-                val name = doc.getString("name") ?: ""
-                val note = doc.getString("note") ?: ""
-                val free = doc.getBoolean("free") ?: true
-                val addr = doc.getString("display_address") ?: ""
-                val hash = doc.getString("geo_hash") ?: ""
-                val spot = ParkingSpot(
-                    name = name,
-                    id = doc.id,
-                    note = note,
-                    displayAddress = addr,
-                )
-                results.add(spot)
-            }
-        } catch (e: Exception) {
-            Timber.tag("FirestoreError").e(e, "Error fetching from Firestore")
+                        docs.documents.mapNotNull { doc ->
+                            val geoPoint = doc.getGeoPoint("geo_point") ?: return@mapNotNull null
+                            ParkingSpot(
+                                name = doc.getString("name") ?: "",
+                                id = doc.id,
+                                note = doc.getString("note") ?: "",
+                                displayAddress = doc.getString("display_address") ?: "",
+                                latitude = geoPoint.latitude,
+                                longitude = geoPoint.longitude,
+                                free = doc.getBoolean("free")
+                            )
+                        }
+                    } catch (e: Exception) {
+                        Timber.tag("FirestoreError")
+                            .e(e, "Error fetching from Firestore for hash: $hash")
+                        emptyList()
+                    }
+                }
+            }.awaitAll().flatten()
         }
-
         return results
     }
 
@@ -119,12 +126,56 @@ class FirebaseRepo @Inject constructor(
             favorites.add(spotId)
         }
 
-        userRef.update("favorites", favorites).await()
-        Timber.tag("UpdatedFaves").d("a new version of objects just dropped")
+        userRef.set(mapOf("favorites" to favorites), SetOptions.merge()).await()
+        Timber.tag("UpdatedFaves").d("a new version of objects just dropped $favorites")
     }
 
-    suspend fun getFavorites(userId: String): List<ParkingSpot> {
-        // TODO: Implement
-        return emptyList()
+    suspend fun getFavorites(userId: String): List<ParkingSpot> = coroutineScope {
+        try {
+            // Step 1: Fetch user's favorites
+            val snapshot = db.collection("users")
+                .document(userId)
+                .get()
+                .await()
+
+            val favoriteIds = snapshot.toObject(Favorites::class.java)
+                ?.favorites
+                .orEmpty()
+
+            if (favoriteIds.isEmpty()) return@coroutineScope emptyList()
+
+            // Step 2: Firestore supports 10 items per whereIn query
+            val chunks = favoriteIds.chunked(10)
+
+            // Step 3: Run chunk fetches concurrently
+            val results = chunks.map { chunk ->
+                async {
+                    db.collection("parkingspots")
+                        .whereIn(FieldPath.documentId(), chunk)
+                        .get()
+                        .await()
+                        .documents
+                        .mapNotNull { doc ->
+                            val geo = doc.getGeoPoint("geo_point") ?: return@mapNotNull null
+                            ParkingSpot(
+                                id = doc.id,
+                                name = doc.getString("name") ?: "",
+                                note = doc.getString("note") ?: "",
+                                displayAddress = doc.getString("display_address") ?: "",
+                                latitude = geo.latitude,
+                                longitude = geo.longitude,
+                                free = doc.getBoolean("free")
+                            )
+                        }
+                }
+            }.awaitAll().flatten()
+
+            // Step 4: Deduplicate and return
+            results.distinctBy { it.id }
+
+        } catch (e: Exception) {
+            Timber.tag("FirestoreError").e(e, "Error fetching favorites for user: $userId")
+            emptyList()
+        }
     }
 }

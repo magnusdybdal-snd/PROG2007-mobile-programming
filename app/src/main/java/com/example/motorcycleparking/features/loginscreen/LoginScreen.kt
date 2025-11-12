@@ -120,7 +120,6 @@ fun LoginScreen(
                     GoogleSignInButton(
                         onClick = { /*TODO*/ },
                     )
-
                     // --- Register Text ---
                     Text(
                         text = "Don't have an account? Register here",
