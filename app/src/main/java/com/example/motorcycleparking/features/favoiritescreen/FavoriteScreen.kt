@@ -93,8 +93,13 @@ fun FavoriteScreen(
                     text = "Favorites"
                 )
 
-                mockFavorites.forEach { spot ->
-                    ParkingSpotCard(parkingSpot = spot)
+                favorites.forEach { spot ->
+                    ParkingSpotCard(
+                        parkingSpot = spot,
+                        onFavoriteClick = {
+                            spot.id?.let { viewModel.toggleFavorite(it) }
+                        }
+                    )
                 }
             }
         }
