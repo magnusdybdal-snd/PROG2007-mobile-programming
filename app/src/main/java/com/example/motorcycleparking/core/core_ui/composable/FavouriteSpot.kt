@@ -10,8 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.runtime.getValue
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
@@ -20,6 +19,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +42,30 @@ fun ParkingSpotCard(
     cs: ColorScheme = MaterialTheme.colorScheme
 ) {
     val context = LocalContext.current
+    var showNavigationDialog by remember { mutableStateOf(false) }
+
+    // Show confirmation dialog
+    if (showNavigationDialog) {
+        NavigationConfirmationDialog(
+            parkingSpotName = parkingSpot.name,
+            onConfirm = {
+                showNavigationDialog = false
+                val lat = parkingSpot.latitude
+                val lon = parkingSpot.longitude
+                if (lat != null && lon != null) {
+                    openGoogleMapsNavigation(
+                        context = context,
+                        latitude = lat,
+                        longitude = lon
+                    )
+                }
+            },
+            onDismiss = {
+                showNavigationDialog = false
+            }
+        )
+    }
+
 
     Card(
         modifier = modifier
