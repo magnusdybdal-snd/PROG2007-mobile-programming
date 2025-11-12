@@ -1,11 +1,16 @@
 package com.example.motorcycleparking.core.utils
 
+import android.net.Uri
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import com.google.firebase.firestore.GeoPoint
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import androidx.core.net.toUri
 
 const val base32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
@@ -129,4 +134,35 @@ fun encodeGeohash(lat: Double, lon: Double, precision: Int = 12): String {
     }
 
     return geohash.toString()
+}
+
+fun openGoogleMapsNavigation(
+    context: Context,
+    latitude: Double,
+    longitude: Double,
+    label: String? = null
+) {
+    try {
+        // Create URI for navigation
+        val uri = if (label != null) {
+            "google.navigation:q=$latitude,$longitude($label)".toUri()
+        } else {
+            "google.navigation:q=$latitude,$longitude".toUri()
+        }
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            setPackage("com.google.android.apps.maps")
+        }
+
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        // Google maps app not installed, open in browser
+        try {
+            val browserUri =
+                "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude".toUri()
+            val browserIntent = Intent(Intent.ACTION_VIEW, browserUri)
+            context.startActivity(browserIntent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Unable to open maps", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
