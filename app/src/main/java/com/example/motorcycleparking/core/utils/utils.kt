@@ -144,11 +144,7 @@ fun openGoogleMapsNavigation(
 ) {
     try {
         // Create URI for navigation
-        val uri = if (label != null) {
-            "google.navigation:q=$latitude,$longitude($label)".toUri()
-        } else {
-            "google.navigation:q=$latitude,$longitude".toUri()
-        }
+        val uri = "google.navigation:q=$latitude,$longitude".toUri()
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             setPackage("com.google.android.apps.maps")
         }

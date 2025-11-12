@@ -22,10 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.motorcycleparking.core.core_ui.AppCard
+import com.example.motorcycleparking.core.utils.openGoogleMapsNavigation
 import com.example.motorcycleparking.domain.models.ParkingSpot
 
 
@@ -37,6 +39,8 @@ fun ParkingSpotCard(
     onInfoClick: () -> Unit = {},
     cs: ColorScheme = MaterialTheme.colorScheme
 ) {
+    val context = LocalContext.current
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -80,11 +84,21 @@ fun ParkingSpotCard(
             }
 
             IconButton(
-                onClick = onInfoClick
+                onClick = {
+                    val lat = parkingSpot.latitude
+                    val lon = parkingSpot.longitude
+                    if (lat != null && lon != null) {
+                        openGoogleMapsNavigation(
+                            context = context,
+                            latitude = lat,
+                            longitude = lon,
+                        )
+                    }
+                }
             ) {
                 Icon(
                     imageVector = Icons.Filled.Directions,
-                    contentDescription = "information",
+                    contentDescription = "Navigate to parking spot",
                     tint = cs.primary
                 )
             }
