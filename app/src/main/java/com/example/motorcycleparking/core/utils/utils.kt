@@ -140,11 +140,17 @@ fun openGoogleMapsNavigation(
     context: Context,
     latitude: Double,
     longitude: Double,
-    label: String? = null
+    directNaviagtion: Boolean = true
 ) {
     try {
         // Create URI for navigation
-        val uri = "google.navigation:q=$latitude,$longitude".toUri()
+        val uri = if (directNaviagtion) {
+            // Start navigation immediately (for favorites)
+            "google.navigation:q=$latitude,$longitude".toUri()
+        } else {
+            // Show route preview first (for regular spots)
+            "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving".toUri()
+        }
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             setPackage("com.google.android.apps.maps")
         }
