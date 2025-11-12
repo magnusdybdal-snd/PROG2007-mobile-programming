@@ -1,6 +1,5 @@
 package com.example.motorcycleparking.features.mapscreen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -21,7 +20,6 @@ import androidx.navigation.NavController
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
-import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.domain.mockNames
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.maps.android.compose.Marker
@@ -37,10 +35,6 @@ fun MapScreen(
     val textFieldState = remember { TextFieldState() }
     val uiState by viewModel.uiState.collectAsState()
     var searchResults by remember { mutableStateOf(mockNames) }
-
-    // TODO Debug print to check hash
-    val geo_hash = encodeGeohash(60.789276,10.682002,6)
-    Log.d("DEBUG", "$geo_hash")
 
     Box(modifier = modifier.fillMaxSize()) {
         // --- Google Maps Composable ---

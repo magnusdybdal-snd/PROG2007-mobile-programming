@@ -30,7 +30,7 @@ import timber.log.Timber
 fun GoogleMapView(
     mapViewModel: MapViewModel,
     settingsViewModel: SettingsViewModel,
-    function: @Composable () -> Unit
+    content: @Composable () -> Unit  // Changed from 'function' to 'content' (better naming)
 ) {
     // Initialize the camera position state
     val cameraPositionState = rememberCameraPositionState()
@@ -121,6 +121,15 @@ fun GoogleMapView(
         }
     }
 
+    // 🎯 NEW: Load parking spots when camera stops moving
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            val cameraCenter = cameraPositionState.position.target
+            Timber.d("Camera stopped at: ${cameraCenter.latitude}, ${cameraCenter.longitude}")
+            mapViewModel.loadParkingSpotsForCamera(cameraCenter)
+        }
+    }
+
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
@@ -132,5 +141,8 @@ fun GoogleMapView(
         uiSettings = MapUiSettings(
             myLocationButtonEnabled = settingsState.showMyLocationButton,
         )
-    )
+    ) {
+        // Render the markers passed from MapScreen
+        content()
+    }
 }

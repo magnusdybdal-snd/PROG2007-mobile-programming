@@ -2,6 +2,7 @@ package com.example.motorcycleparking.features.mapscreen
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.State
@@ -41,84 +42,121 @@ class MapViewModel @Inject constructor(
     val userLocation: State<LatLng?> = _userLocation
     private var locationCallback: LocationCallback? = null
 
-    // Don't call loadParkingSpots in init - wait for user location
-    //init {
-    //    loadParkingSpots()
-    //}
+    private var lastLoadedLocation: LatLng? = null
+    private val loadThreshold = 200.0 // meters - only reload if camera moved this far
 
-    private fun loadParkingSpots(geoPoint: GeoPoint) {
-        viewModelScope.launch {
-            _uiState.value = MapUiState(isLoading = true)
-            getNearbyParkingSpotsUseCase(geoPoint = geoPoint)
-                .onSuccess { parkingSpots ->
-                    Log.d(TAG, "Received ${parkingSpots.size} parking spots from firestore")
+    init {
+        Log.d(TAG, "🚀 MapViewModel initialized")
+    }
 
-                    _uiState.value = MapUiState(
-                        isLoading = false,
-                        spots = parkingSpots
-                    )
-                }
-                .onFailure { exception ->
-                    Log.e(TAG, "Error loading parking spots from firestore", exception)
-                    _uiState.value = MapUiState(
-                        isLoading = false,
-                        errorMessage = exception.message ?: "Unknown error"
-                    )
-                }
+    // 🎯 NEW: Load parking spots based on camera position
+    fun loadParkingSpotsForCamera(cameraPosition: LatLng) {
+        if (shouldReload(cameraPosition)) {
+            Log.d(TAG, "📍 Loading parking spots for camera position: (${cameraPosition.latitude}, ${cameraPosition.longitude})")
+
+            viewModelScope.launch {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+
+                val geoPoint = GeoPoint(cameraPosition.latitude, cameraPosition.longitude)
+
+                getNearbyParkingSpotsUseCase(geoPoint)
+                    .onSuccess { parkingSpots ->
+                        Log.d(TAG, "✅ SUCCESS! Received ${parkingSpots.size} parking spots for camera view")
+
+                        parkingSpots.forEachIndexed { index, spot ->
+                            Log.d(TAG, "  📍 Spot ${index + 1}: ${spot.name} at (${spot.latitude}, ${spot.longitude})")
+                        }
+
+                        _uiState.value = MapUiState(
+                            isLoading = false,
+                            spots = parkingSpots
+                        )
+                        lastLoadedLocation = cameraPosition
+                    }
+                    .onFailure { exception ->
+                        Log.e(TAG, "❌ ERROR loading parking spots: ${exception.message}", exception)
+                        _uiState.value = MapUiState(
+                            isLoading = false,
+                            errorMessage = exception.message ?: "Unknown error"
+                        )
+                    }
+            }
         }
     }
 
+    private fun shouldReload(newLocation: LatLng): Boolean {
+        val last = lastLoadedLocation ?: return true
+        val distance = FloatArray(1)
+        Location.distanceBetween(
+            last.latitude, last.longitude,
+            newLocation.latitude, newLocation.longitude,
+            distance
+        )
+        val shouldReload = distance[0] > loadThreshold
+        if (!shouldReload) {
+            Log.d(TAG, "⏭️ Skipping reload - camera only moved ${distance[0]}m")
+        }
+        return shouldReload
+    }
 
-    // Function to fetch the user's location and update the state
     fun fetchUserLocation(context: Context, fusedLocationClient: FusedLocationProviderClient) {
-        if (ContextCompat.checkSelfPermission( // Check if the location permission is granted
+        Log.d(TAG, "🔍 fetchUserLocation called")
+
+        if (ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
+            Log.d(TAG, "✅ Location permission granted")
             try {
-                // Fetch the last known location
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    location?.let {
-                        // Update the user's location in the state
-                        val userLatLng = LatLng(it.latitude, it.longitude)
+                    if (location != null) {
+                        val userLatLng = LatLng(location.latitude, location.longitude)
                         _userLocation.value = userLatLng
+                        Log.d(TAG, "📍 User location found: (${location.latitude}, ${location.longitude})")
 
-                        val geoPoint = GeoPoint(it.latitude, it.longitude)
-                        loadParkingSpots(geoPoint)
+                        // Initial load based on user location
+                        loadParkingSpotsForCamera(userLatLng)
+                    } else {
+                        Log.w(TAG, "⚠️ Location is null - GPS might not be ready yet")
                     }
+                }.addOnFailureListener { exception ->
+                    Log.e(TAG, "❌ Failed to get location: ${exception.message}", exception)
                 }
             } catch (e: SecurityException) {
-                Timber.e("Permission for location access was revoked: ${e.localizedMessage}")
+                Log.e(TAG, "❌ SecurityException: ${e.localizedMessage}", e)
             }
         } else {
-            Timber.e("Location permission is not granted.")
+            Log.e(TAG, "❌ Location permission NOT granted")
         }
     }
 
-    fun startLocationUpdates(context: Context, fusedLocationClient: FusedLocationProviderClient){
+    fun startLocationUpdates(context: Context, fusedLocationClient: FusedLocationProviderClient) {
+        Log.d(TAG, "🔄 startLocationUpdates called")
+
         if (ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_DENIED
+            ) == PackageManager.PERMISSION_DENIED
         ) {
+            Log.e(TAG, "❌ Cannot start location updates - permission denied")
             return
         }
+
+        Log.d(TAG, "✅ Setting up location updates...")
+
         val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY, 10000L // Update every 10 seconds.
-        ).apply{
-            setMinUpdateIntervalMillis(5000L) // Fastest update every 5 seconds
+            Priority.PRIORITY_HIGH_ACCURACY, 10000L
+        ).apply {
+            setMinUpdateIntervalMillis(5000L)
         }.build()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    val userLatLng = LatLng(location.latitude, location.longitude)
-                    _userLocation.value = userLatLng
-
-                    // Reload parking spot when location updated
-                    //val geoPoint = GeoPoint(location.latitude, location.longitude)
-                    //loadParkingSpots(geoPoint)
+                    val newLocation = LatLng(location.latitude, location.longitude)
+                    Log.d(TAG, "📍 Location update: (${location.latitude}, ${location.longitude})")
+                    _userLocation.value = newLocation
                 }
             }
         }
@@ -129,19 +167,24 @@ class MapViewModel @Inject constructor(
                 locationCallback!!,
                 Looper.getMainLooper()
             )
+            Log.d(TAG, "✅ Location updates started successfully")
         } catch (e: SecurityException) {
+            Log.e(TAG, "❌ Error requesting location updates: ${e.localizedMessage}", e)
             Timber.e("Error requesting location updates: ${e.localizedMessage}")
         }
     }
 
     fun stopLocationUpdates(fusedLocationClient: FusedLocationProviderClient) {
+        Log.d(TAG, "⏹️ Stopping location updates")
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
+            Log.d(TAG, "✅ Location updates stopped")
         }
     }
 
     override fun onCleared() {
         super.onCleared()
+        Log.d(TAG, "🧹 MapViewModel cleared")
         locationCallback = null
     }
 }

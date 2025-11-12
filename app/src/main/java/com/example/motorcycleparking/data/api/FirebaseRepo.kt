@@ -4,6 +4,8 @@ import android.service.controls.ControlsProviderService
 import android.util.Log
 import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.core.utils.getNeighbors
+import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
+import com.example.motorcycleparking.data.api.dto.toDomain
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Firebase
@@ -60,8 +62,10 @@ class FirebaseRepo @Inject constructor(
         return try {
         val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
         val geoHashNeighbors = getNeighbors(geoHash)
+        val dtoList = mutableListOf<ParkingSpotDto>()
 
-        val results = mutableListOf<ParkingSpot>()
+
+            val results = mutableListOf<ParkingSpot>()
 
             val docs = db.collection("parkingspots")
                 .orderBy("geo_hash")
@@ -71,24 +75,25 @@ class FirebaseRepo @Inject constructor(
                 .await()
 
             for (doc in docs) {
-                val point = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0)
-                val name = doc.getString("name") ?: ""
-                val note = doc.getString("note") ?: ""
-                val free = doc.getBoolean("free") ?: true
-                val addr = doc.getString("display_address") ?: ""
-                val hash = doc.getString("geo_hash") ?: ""
-                val spot = ParkingSpot(
-                    name = name,
+                val dto = ParkingSpotDto(
                     id = doc.id,
-                    note = note,
-                    displayAddress = addr,
+                    name = doc.getString("name") ?: "",
+                    note = doc.getString("note") ?: "",
+                    displayAddress = doc.getString("display_address") ?: "",
+                    geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                    geoHash = doc.getString("geo_hash") ?: "",
+                    free = doc.getBoolean("free") ?: true
                 )
-                results.add(spot)
+                dtoList.add(dto)
+                Log.d("FirebaseRepo", "   Added spot: ${dto.name} at (${dto.geoPoint.latitude}, ${dto.geoPoint.longitude})")
             }
-            Log.d("FirebaseRepo", "Successfully fetched ${results.size} parking spots")
-            Result.success(results)
+            val domainList = dtoList.toDomain()
+            Log.d("FirebaseRepo", "✅ Successfully fetched ${results.size} parking spots")
+            Result.success(domainList)
+
         } catch (e: Exception) {
-            Log.e("FirestoreError", "Error fetching from Firestore", e)
+            Log.e("FirebaseRepo", "❌ Error fetching from Firestore: ${e.message}", e)
+            Log.e("FirebaseRepo", "Error type: ${e.javaClass.simpleName}")
             Result.failure(e)
         }
     }
