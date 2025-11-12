@@ -55,11 +55,11 @@ class FirebaseRepo @Inject constructor(
     suspend fun getParkingspotsNearYou(
         geoPoint: GeoPoint,
         precision: Int = 6
-    ): MutableList<ParkingSpot> {
+    ): Result<List<ParkingSpot>> {
         val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
         val geoHashNeighbors = getNeighbors(geoHash)
 
-        val results = mutableListOf<ParkingSpot>()
+        val results = Result<List<ParkingSpot>>()
 
         try {
             val docs = db.collection("parkingspots")

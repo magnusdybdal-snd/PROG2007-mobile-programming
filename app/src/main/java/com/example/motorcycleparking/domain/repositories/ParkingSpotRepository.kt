@@ -1,5 +1,7 @@
 package com.example.motorcycleparking.domain.repositories
 
+import com.example.motorcycleparking.domain.models.ParkingSpot
+
 interface ParkingSpotRepository {
-    // TODO: Implement
+    suspend fun getAllParkingSpots(): Result<List<ParkingSpot>>
 }
