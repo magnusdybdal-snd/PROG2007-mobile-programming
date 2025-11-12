@@ -4,6 +4,7 @@ import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.core.utils.getNeighbors
 import com.example.motorcycleparking.data.api.dto.FavoritesDto
 import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
+import com.example.motorcycleparking.data.api.dto.SearchDto
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Firebase
@@ -111,20 +112,24 @@ class FirebaseRepo @Inject constructor(
 
     suspend fun toggleFavorite(userId: String, spotId: String) {
         val userRef = db.collection("users").document(userId)
-        val snapshot = userRef.get().await()
 
-        val user = snapshot.toObject(Favorites::class.java) ?: Favorites()
-        val favorites = user.favorites?.toMutableList() ?: mutableListOf<String>()
+        // Use a transaction to avoid race conditions
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(userRef)
+            val user = snapshot.toObject(FavoritesDto::class.java)
+            val favorites = user?.ids?.toMutableList() ?: mutableListOf()
 
-        if (favorites.contains(spotId)) {
-            favorites.remove(spotId)
-        } else {
-            favorites.add(spotId)
-        }
+            if (favorites.contains(spotId)) {
+                favorites.remove(spotId)
+            } else {
+                favorites.add(spotId)
+            }
 
-        userRef.set(mapOf("favorites" to favorites), SetOptions.merge()).await()
-        Timber.tag("UpdatedFaves").d("a new version of objects just dropped $favorites")
+            transaction.set(userRef, mapOf("favorites" to favorites), SetOptions.merge())
+        }.await()
+        Timber.tag("UpdatedFaves").d("Updated favorites for $userId: $spotId")
     }
+
 
     suspend fun getFavorites(userId: String): List<ParkingSpot> = coroutineScope {
         try {
@@ -175,4 +180,24 @@ class FirebaseRepo @Inject constructor(
         }
     }
 
+    suspend fun getTitlesInSearch(search: String, limit: Long = 10): Result<List<SearchDto>> {
+        return try {
+            val lowerSearch: String = search.lowercase()
+
+            val snapshot = db.collection("parkingspots")
+                .whereGreaterThanOrEqualTo("name_lowercase", lowerSearch)
+                .whereLessThanOrEqualTo("name_lowercase", lowerSearch + "\uf8ff")
+                .limit(limit)
+                .get()
+                .await()
+
+            val searchedResults = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(SearchDto::class.java)
+            }
+
+            Result.success(searchedResults)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

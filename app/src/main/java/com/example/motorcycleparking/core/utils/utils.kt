@@ -40,7 +40,6 @@ private val BORDERS = mapOf(
     )
 )
 
-
 fun getNeighbors(geoHash: String, includeCenter: Boolean = false): List<String> {
     if (geoHash.isEmpty()) return emptyList()
 
