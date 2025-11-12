@@ -36,6 +36,8 @@ fun FavoriteScreen(
             name = "Downtown Parking",
             id = "mock1",
             displayAddress = "123 Main Street, City Center",
+            latitude = 60.7944800514934,
+            longitude = 11.068259632114028,
             free = true,
             note = null
         ),
@@ -43,6 +45,8 @@ fun FavoriteScreen(
             name = "Park & Ride Lot",
             id = "mock2",
             displayAddress = "456 Oak Avenue, North Side",
+            latitude = 38.00790342343918,
+            longitude = 23.72066049567644,
             free = false,
             note = null
         )

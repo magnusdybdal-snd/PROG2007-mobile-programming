@@ -1,11 +1,16 @@
 package com.example.motorcycleparking.core.utils
 
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import com.google.firebase.firestore.GeoPoint
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import androidx.core.net.toUri
 
 
 const val BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
@@ -145,4 +150,39 @@ fun encodeGeohash(lat: Double, lon: Double, precision: Int = 12): String {
     }
 
     return geohash.toString()
+}
+
+fun openGoogleMapsNavigation(
+    context: Context,
+    latitude: Double,
+    longitude: Double,
+    directNaviagtion: Boolean = true
+) {
+    try {
+        // Create URI for navigation
+        val uri = if (directNaviagtion) {
+            // Start navigation immediately (for favorites)
+            "google.navigation:q=$latitude,$longitude".toUri()
+        } else {
+            // Show route preview first (for regular spots)
+            "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving".toUri()
+        }
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            setPackage("com.google.android.apps.maps")
+        }
+
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        // Google maps app not installed, open in browser
+        Log.w("Navigation", "Google Maps app not available, falling back to browser", e)
+        try {
+            val browserUri =
+                "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude".toUri()
+            val browserIntent = Intent(Intent.ACTION_VIEW, browserUri)
+            context.startActivity(browserIntent)
+        } catch (e: Exception) {
+            Log.e("Navigation", "Failed to open maps in browser", e)
+            Toast.makeText(context, "Unable to open maps", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
