@@ -16,6 +16,7 @@ import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+
 class FirebaseRepo @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
@@ -56,12 +57,12 @@ class FirebaseRepo @Inject constructor(
         geoPoint: GeoPoint,
         precision: Int = 6
     ): Result<List<ParkingSpot>> {
+        return try {
         val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
         val geoHashNeighbors = getNeighbors(geoHash)
 
-        val results = Result<List<ParkingSpot>>()
+        val results = mutableListOf<ParkingSpot>()
 
-        try {
             val docs = db.collection("parkingspots")
                 .orderBy("geo_hash")
                 .startAt(geoHash)
@@ -84,11 +85,12 @@ class FirebaseRepo @Inject constructor(
                 )
                 results.add(spot)
             }
+            Log.d("FirebaseRepo", "Successfully fetched ${results.size} parking spots")
+            Result.success(results)
         } catch (e: Exception) {
             Log.e("FirestoreError", "Error fetching from Firestore", e)
+            Result.failure(e)
         }
-
-        return results
     }
 
     suspend fun getCurrentUserId(): String? {
@@ -104,3 +106,4 @@ class FirebaseRepo @Inject constructor(
         return emptyList()
     }
 }
+

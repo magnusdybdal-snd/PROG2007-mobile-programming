@@ -9,13 +9,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.motorcycleparking.domain.usecases.GetAllParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.GeoPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +24,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
-import androidx.compose.runtime.getValue
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val getAllParkingSpotsUseCase: GetAllParkingSpotsUseCase
+    private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase
 ) : ViewModel() {
 
     companion object {
@@ -41,13 +41,15 @@ class MapViewModel @Inject constructor(
     val userLocation: State<LatLng?> = _userLocation
     private var locationCallback: LocationCallback? = null
 
-    init {
-        loadParkingSpots()
-    }
+    // Don't call loadParkingSpots in init - wait for user location
+    //init {
+    //    loadParkingSpots()
+    //}
 
-    private fun loadParkingSpots() {
+    private fun loadParkingSpots(geoPoint: GeoPoint) {
         viewModelScope.launch {
-            getAllParkingSpotsUseCase()
+            _uiState.value = MapUiState(isLoading = true)
+            getNearbyParkingSpotsUseCase(geoPoint = geoPoint)
                 .onSuccess { parkingSpots ->
                     Log.d(TAG, "Received ${parkingSpots.size} parking spots from firestore")
 
@@ -81,6 +83,9 @@ class MapViewModel @Inject constructor(
                         // Update the user's location in the state
                         val userLatLng = LatLng(it.latitude, it.longitude)
                         _userLocation.value = userLatLng
+
+                        val geoPoint = GeoPoint(it.latitude, it.longitude)
+                        loadParkingSpots(geoPoint)
                     }
                 }
             } catch (e: SecurityException) {
@@ -108,7 +113,12 @@ class MapViewModel @Inject constructor(
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    _userLocation.value = LatLng(location.latitude, location.longitude)
+                    val userLatLng = LatLng(location.latitude, location.longitude)
+                    _userLocation.value = userLatLng
+
+                    // Reload parking spot when location updated
+                    //val geoPoint = GeoPoint(location.latitude, location.longitude)
+                    //loadParkingSpots(geoPoint)
                 }
             }
         }

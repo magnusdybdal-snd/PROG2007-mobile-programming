@@ -10,8 +10,10 @@ class ParkingSpotRepositoryImpl @Inject constructor(
     private val firebaseRepo: FirebaseRepo
 ): ParkingSpotRepository {
 
-    override suspend fun getAllParkingSpots(): Result<List<ParkingSpot>> {
-
-        return firebaseRepo.getParkingspotsNearYou(geoPoint = GeoPoint(0.0, 0.0), 0)
+    override suspend fun getNearbyParkingSpots(
+        geoPoint: GeoPoint,
+        precision: Int
+    ): Result<List<ParkingSpot>> {
+        return firebaseRepo.getParkingspotsNearYou(geoPoint = geoPoint, precision = precision)
     }
 }

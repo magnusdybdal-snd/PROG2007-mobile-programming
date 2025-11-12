@@ -29,7 +29,8 @@ import timber.log.Timber
 @Composable
 fun GoogleMapView(
     mapViewModel: MapViewModel,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
+    function: @Composable () -> Unit
 ) {
     // Initialize the camera position state
     val cameraPositionState = rememberCameraPositionState()
