@@ -186,3 +186,36 @@ fun openGoogleMapsNavigation(
         }
     }
 }
+
+object GeoUtils {
+    /**
+     * Convert Google Maps zoom level to geohash precision
+     * Higher zoom = more precision = more geohash characters
+     */
+    fun zoomLevelToPrecision(zoom: Float): Int {
+        return when {
+            zoom < 6f -> 3   // Very zoomed out - city level
+            zoom < 9f -> 4   // Zoomed out - district level
+            zoom < 12f -> 5  // Medium zoom - neighborhood level
+            zoom < 15f -> 6  // Zoomed in - street level
+            zoom < 18f -> 7  // Very zoomed in - building level
+            else -> 8        // Maximum zoom - precise location
+        }
+    }
+
+    /**
+     * Get approximate search radius in meters for a given precision
+     * Useful for debugging or showing to users
+     */
+    fun precisionToRadius(precision: Int): Double {
+        return when (precision) {
+            3 -> 78000.0    // ~78 km
+            4 -> 19500.0    // ~19.5 km
+            5 -> 2440.0     // ~2.4 km
+            6 -> 610.0      // ~610 m
+            7 -> 76.0       // ~76 m
+            8 -> 19.0       // ~19 m
+            else -> 610.0   // Default to precision 6
+        }
+    }
+}

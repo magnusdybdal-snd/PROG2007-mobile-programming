@@ -29,7 +29,8 @@ import timber.log.Timber
 @Composable
 fun GoogleMapView(
     mapViewModel: MapViewModel,
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
+    content: @Composable () -> Unit  // Changed from 'function' to 'content' (better naming)
 ) {
     // Initialize the camera position state
     val cameraPositionState = rememberCameraPositionState()
@@ -120,6 +121,32 @@ fun GoogleMapView(
         }
     }
 
+    // Load ALL spots visible on screen when camera stops moving
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            val projection = cameraPositionState.projection
+
+            if (projection != null) {
+                // Get the actual visible region bounds via "google magic"
+                // Converts screen pixels to lagLng.
+                val visibleRegion = projection.visibleRegion
+                val bounds = visibleRegion.latLngBounds
+
+                Timber.d("📍 Camera stopped - visible area:")
+                Timber.d("   SW: (${bounds.southwest.latitude}, ${bounds.southwest.longitude})")
+                Timber.d("   NE: (${bounds.northeast.latitude}, ${bounds.northeast.longitude})")
+
+                // Load all spots in this bounding box
+                mapViewModel.loadParkingSpotsInBounds(
+                    swLat = bounds.southwest.latitude,
+                    swLng = bounds.southwest.longitude,
+                    neLat = bounds.northeast.latitude,
+                    neLng = bounds.northeast.longitude
+                )
+            }
+        }
+    }
+
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
@@ -131,5 +158,8 @@ fun GoogleMapView(
         uiSettings = MapUiSettings(
             myLocationButtonEnabled = settingsState.showMyLocationButton,
         )
-    )
+    ) {
+        // Render the markers passed from MapScreen
+        content()
+    }
 }
