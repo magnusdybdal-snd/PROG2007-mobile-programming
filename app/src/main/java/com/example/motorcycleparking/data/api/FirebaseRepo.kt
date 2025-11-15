@@ -1,10 +1,11 @@
 package com.example.motorcycleparking.data.api
 
-import android.service.controls.ControlsProviderService
 import android.util.Log
 import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
 import com.example.motorcycleparking.data.api.dto.toDomain
+import com.example.motorcycleparking.core.utils.getNeighbors
+import com.example.motorcycleparking.data.api.dto.Favorites
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Firebase
@@ -12,10 +13,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Inject
 
 class FirebaseRepo @Inject constructor(
@@ -45,9 +52,19 @@ class FirebaseRepo @Inject constructor(
     }
 
     suspend fun createUser(email: String, password: String): FirebaseUser? {
-            val result = auth.createUserWithEmailAndPassword(email, password).await()
-            Log.d(ControlsProviderService.TAG, "Successfully created account")
-            return result.user
+        val result = auth.createUserWithEmailAndPassword(email, password).await()
+        val user = result.user ?: return null
+        Timber.tag("UserCreation").d("Successfully created account")
+        try {
+            val userData = hashMapOf(
+                "favorites" to emptyList<String>()
+            )
+
+            db.collection("users").document(user.uid).set(userData).await()
+        } catch (e: Exception) {
+            Timber.tag("UserCreation").e(e, "Failed to create user in Firestore document")
+        }
+        return user
     }
 
     fun signOut() {
@@ -59,9 +76,10 @@ class FirebaseRepo @Inject constructor(
         precision: Int = 6
     ): Result<List<ParkingSpot>> {
         return try {
-        val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
-        val dtoList = mutableListOf<ParkingSpotDto>()
+            val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
+            val dtoList = mutableListOf<ParkingSpotDto>()
 
+            val geoHashNeighbors = getNeighbors(geoHash) + geoHash
 
             val results = mutableListOf<ParkingSpot>()
 
@@ -79,11 +97,12 @@ class FirebaseRepo @Inject constructor(
                     note = doc.getString("note") ?: "",
                     displayAddress = doc.getString("display_address") ?: "",
                     geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
-                    geoHash = doc.getString("geo_hash") ?: "",
-                    free = doc.getBoolean("free") ?: true
                 )
                 dtoList.add(dto)
-                Log.d("FirebaseRepo", "   Added spot: ${dto.name} at (${dto.geoPoint.latitude}, ${dto.geoPoint.longitude})")
+                Log.d(
+                    "FirebaseRepo",
+                    "   Added spot: ${dto.name} at (${dto.geoPoint.latitude}, ${dto.geoPoint.longitude})"
+                )
             }
             val domainList = dtoList.toDomain()
             Log.d("FirebaseRepo", "✅ Successfully fetched ${results.size} parking spots")
@@ -101,12 +120,69 @@ class FirebaseRepo @Inject constructor(
     }
 
     suspend fun toggleFavorite(userId: String, spotId: String) {
-        // TODO: Implement
+        val userRef = db.collection("users").document(userId)
+        val snapshot = userRef.get().await()
+
+        val user = snapshot.toObject(Favorites::class.java) ?: Favorites()
+        val favorites = user.favorites?.toMutableList() ?: mutableListOf<String>()
+
+        if (favorites.contains(spotId)) {
+            favorites.remove(spotId)
+        } else {
+            favorites.add(spotId)
+        }
+
+        userRef.set(mapOf("favorites" to favorites), SetOptions.merge()).await()
+        Timber.tag("UpdatedFaves").d("a new version of objects just dropped $favorites")
     }
 
-    suspend fun getFavorites(userId: String): List<ParkingSpot> {
-        // TODO: Implement
-        return emptyList()
+    suspend fun getFavorites(userId: String): List<ParkingSpot> = coroutineScope {
+        try {
+            // Step 1: Fetch user's favorites
+            val snapshot = db.collection("users")
+                .document(userId)
+                .get()
+                .await()
+
+            val favoriteIds = snapshot.toObject(Favorites::class.java)
+                ?.favorites
+                .orEmpty()
+
+            if (favoriteIds.isEmpty()) return@coroutineScope emptyList()
+
+            // Step 2: Firestore supports 10 items per whereIn query
+            val chunks = favoriteIds.chunked(10)
+
+            // Step 3: Run chunk fetches concurrently
+            val results = chunks.map { chunk ->
+                async {
+                    db.collection("parkingspots")
+                        .whereIn(FieldPath.documentId(), chunk)
+                        .get()
+                        .await()
+                        .documents
+                        .mapNotNull { doc ->
+                            val geo = doc.getGeoPoint("geo_point") ?: return@mapNotNull null
+                            ParkingSpot(
+                                id = doc.id,
+                                name = doc.getString("name") ?: "",
+                                note = doc.getString("note") ?: "",
+                                displayAddress = doc.getString("display_address") ?: "",
+                                latitude = geo.latitude,
+                                longitude = geo.longitude,
+                                free = doc.getBoolean("free")
+                            )
+                        }
+                }
+            }.awaitAll().flatten()
+
+            // Step 4: Deduplicate and return
+            results.distinctBy { it.id }
+
+        } catch (e: Exception) {
+            Timber.tag("FirestoreError").e(e, "Error fetching favorites for user: $userId")
+            emptyList()
+        }
     }
 
 
@@ -162,8 +238,6 @@ class FirebaseRepo @Inject constructor(
                         note = doc.getString("note") ?: "",
                         displayAddress = doc.getString("display_address") ?: "",
                         geoPoint = point,
-                        geoHash = doc.getString("geo_hash") ?: "",
-                        free = doc.getBoolean("free") ?: true
                     )
                     spotsInBounds.add(dto)
                     Log.d("FirebaseRepo", "   ✅ ${dto.name} is in bounds")

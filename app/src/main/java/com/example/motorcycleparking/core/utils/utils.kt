@@ -1,15 +1,21 @@
 package com.example.motorcycleparking.core.utils
 
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import com.google.firebase.firestore.GeoPoint
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import androidx.core.net.toUri
 
-const val base32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
-val neighborMap = mapOf(
+const val BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
+
+private val NEIGHBORS = mapOf(
     "even" to mapOf(
         "n" to "p0r21436x8zb9dcf5h7kjnmqesgutwvy",
         "s" to "14365h7k9dcfesgujnmqp0r2twvyx8zb",
@@ -24,55 +30,70 @@ val neighborMap = mapOf(
     )
 )
 
-val borderMap = mapOf(
+private val BORDERS = mapOf(
     "even" to mapOf(
-        "n" to "bcfguvyz",
-        "s" to "0145hjnp",
-        "e" to "prxz",
-        "w" to "028b"
-    ),
-    "odd" to mapOf(
         "n" to "prxz",
         "s" to "028b",
         "e" to "bcfguvyz",
         "w" to "0145hjnp"
+    ),
+    "odd" to mapOf(
+        "n" to "bcfguvyz",
+        "s" to "0145hjnp",
+        "e" to "prxz",
+        "w" to "028b"
     )
 )
 
-fun getNeighbors(geoHash: String): List<String> {
+
+fun getNeighbors(geoHash: String, includeCenter: Boolean = false): List<String> {
     if (geoHash.isEmpty()) return emptyList()
 
-    val neighbors = mutableListOf<String>()
-    val dirs = listOf("n", "s", "e", "w")
+    val n = calculateAdjacent(geoHash, "n")
+    val s = calculateAdjacent(geoHash, "s")
+    val e = calculateAdjacent(geoHash, "e")
+    val w = calculateAdjacent(geoHash, "w")
 
-    neighbors.add(geoHash)
+    val diagonals = listOf(
+        calculateDiagonal(geoHash, "n", "e"), // NE
+        calculateDiagonal(geoHash, "n", "w"), // NW
+        calculateDiagonal(geoHash, "s", "e"), // SE
+        calculateDiagonal(geoHash, "s", "w")  // SW
+    )
 
-    for (dir in dirs) {
-        neighbors.add(calculateAdjacent(geoHash, dir))
-    }
+    val neighbors = mutableListOf(n, s, e, w)
+    neighbors.addAll(diagonals)
 
-    neighbors.add(calculateAdjacent(calculateAdjacent(geoHash, "n"), "e")) // NE
-    neighbors.add(calculateAdjacent(calculateAdjacent(geoHash, "n"), "w")) // NW
-    neighbors.add(calculateAdjacent(calculateAdjacent(geoHash, "s"), "e")) // SE
-    neighbors.add(calculateAdjacent(calculateAdjacent(geoHash, "s"), "w")) // SW
+    if (includeCenter) neighbors.add(geoHash)
 
     return neighbors
 }
 
 fun calculateAdjacent(geoHash: String, dir: String): String {
-    var lastChar = geoHash.last()
+    if (geoHash.isEmpty()) return ""
+
+    val lastChar = geoHash.last()
     val type = if (geoHash.length % 2 == 0) "even" else "odd"
-    val border = borderMap[type]?.get(dir) ?: ""
-    val neighbor = neighborMap[type]?.get(dir) ?: ""
 
     var parent = geoHash.dropLast(1)
-    if (border.contains(lastChar) && parent.isNotEmpty()) {
+
+    // If last character is at the border, calculate parent's adjacent
+    if (BORDERS[type]?.get(dir)?.contains(lastChar) == true && parent.isNotEmpty()) {
         parent = calculateAdjacent(parent, dir)
     }
-    val charIndex = neighbor.indexOf(lastChar)
-    return parent + base32[charIndex]
+
+    val neighborStr =
+        NEIGHBORS[type]?.get(dir) ?: throw IllegalArgumentException("Invalid direction")
+    val index = neighborStr.indexOf(lastChar)
+    if (index == -1) throw IllegalArgumentException("Invalid geohash character: $lastChar")
+
+    return parent + BASE32[index]
 }
 
+private fun calculateDiagonal(geoHash: String, dir1: String, dir2: String): String {
+    val first = calculateAdjacent(geoHash, dir1)
+    return calculateAdjacent(first, dir2)
+}
 
 fun distanceInKm(point1: GeoPoint, point2: GeoPoint): Double {
     val R = 6371.0 // Earth radius in km
@@ -122,13 +143,48 @@ fun encodeGeohash(lat: Double, lon: Double, precision: Int = 12): String {
         if (bit < 4) {
             bit++
         } else {
-            geohash.append(base32[ch])
+            geohash.append(BASE32[ch])
             bit = 0
             ch = 0
         }
     }
 
     return geohash.toString()
+}
+
+fun openGoogleMapsNavigation(
+    context: Context,
+    latitude: Double,
+    longitude: Double,
+    directNaviagtion: Boolean = true
+) {
+    try {
+        // Create URI for navigation
+        val uri = if (directNaviagtion) {
+            // Start navigation immediately (for favorites)
+            "google.navigation:q=$latitude,$longitude".toUri()
+        } else {
+            // Show route preview first (for regular spots)
+            "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving".toUri()
+        }
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            setPackage("com.google.android.apps.maps")
+        }
+
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        // Google maps app not installed, open in browser
+        Log.w("Navigation", "Google Maps app not available, falling back to browser", e)
+        try {
+            val browserUri =
+                "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude".toUri()
+            val browserIntent = Intent(Intent.ACTION_VIEW, browserUri)
+            context.startActivity(browserIntent)
+        } catch (e: Exception) {
+            Log.e("Navigation", "Failed to open maps in browser", e)
+            Toast.makeText(context, "Unable to open maps", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
 
 object GeoUtils {

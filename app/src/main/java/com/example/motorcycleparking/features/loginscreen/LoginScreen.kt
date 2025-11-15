@@ -113,13 +113,13 @@ fun LoginScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp)
+
                     ) {
                         Text("Login")
                     }
                     GoogleSignInButton(
                         onClick = { /*TODO*/ },
                     )
-
                     // --- Register Text ---
                     Text(
                         text = "Don't have an account? Register here",
