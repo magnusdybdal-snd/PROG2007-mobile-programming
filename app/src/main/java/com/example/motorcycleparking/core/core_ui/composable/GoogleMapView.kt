@@ -125,8 +125,12 @@ fun GoogleMapView(
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val cameraCenter = cameraPositionState.position.target
-            Timber.d("Camera stopped at: ${cameraCenter.latitude}, ${cameraCenter.longitude}")
-            mapViewModel.loadParkingSpotsForCamera(cameraCenter)
+            val zoomLevel = cameraPositionState.position.zoom
+
+            Timber.d("Camera stopped at: ${cameraCenter.latitude}, ${cameraCenter.longitude}, zoom: $zoomLevel")
+
+            // Load with zoom aware precision
+            mapViewModel.loadParkingSpotsForCamera(cameraCenter, zoomLevel)
         }
     }
 

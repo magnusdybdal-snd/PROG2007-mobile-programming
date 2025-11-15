@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.motorcycleparking.core.utils.GeoUtils
 import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -43,6 +44,7 @@ class MapViewModel @Inject constructor(
     private var locationCallback: LocationCallback? = null
 
     private var lastLoadedLocation: LatLng? = null
+    private var lastZoomLevel: Float? = null
     private val loadThreshold = 200.0 // meters - only reload if camera moved this far
 
     init {
@@ -50,21 +52,31 @@ class MapViewModel @Inject constructor(
     }
 
     // 🎯 NEW: Load parking spots based on camera position
-    fun loadParkingSpotsForCamera(cameraPosition: LatLng) {
+    fun loadParkingSpotsForCamera(cameraPosition: LatLng, zoomLevel: Float) {
         if (shouldReload(cameraPosition)) {
-            Log.d(TAG, "📍 Loading parking spots for camera position: (${cameraPosition.latitude}, ${cameraPosition.longitude})")
+            val precision = GeoUtils.zoomLevelToPrecision(zoomLevel)
+            val estimatedRadius = GeoUtils.precisionToRadius(precision)
+
+            Log.d(TAG, "📍 Loading parking spots:")
+            Log.d(TAG, "   Position: (${cameraPosition.latitude}, ${cameraPosition.longitude})")
+            Log.d(TAG, "   Zoom: $zoomLevel → Precision: $precision")
+            Log.d(TAG, "   Estimated radius: ${estimatedRadius}m")
 
             viewModelScope.launch {
                 _uiState.value = _uiState.value.copy(isLoading = true)
 
                 val geoPoint = GeoPoint(cameraPosition.latitude, cameraPosition.longitude)
 
-                getNearbyParkingSpotsUseCase(geoPoint)
+                getNearbyParkingSpotsUseCase(geoPoint, precision)
                     .onSuccess { parkingSpots ->
                         Log.d(TAG, "✅ SUCCESS! Received ${parkingSpots.size} parking spots for camera view")
 
-                        parkingSpots.forEachIndexed { index, spot ->
-                            Log.d(TAG, "  📍 Spot ${index + 1}: ${spot.name} at (${spot.latitude}, ${spot.longitude})")
+                        if (parkingSpots.isNotEmpty()) {
+                            parkingSpots.forEachIndexed { index, spot ->
+                                Log.d(TAG, "  📍 Spot ${index + 1}: ${spot.name} at (${spot.latitude}, ${spot.longitude})")
+                            }
+                        } else {
+                            Log.d(TAG, "  ⚠️ No parking spots found in this area")
                         }
 
                         _uiState.value = MapUiState(
@@ -72,6 +84,7 @@ class MapViewModel @Inject constructor(
                             spots = parkingSpots
                         )
                         lastLoadedLocation = cameraPosition
+                        lastZoomLevel = zoomLevel
                     }
                     .onFailure { exception ->
                         Log.e(TAG, "❌ ERROR loading parking spots: ${exception.message}", exception)
@@ -98,6 +111,22 @@ class MapViewModel @Inject constructor(
         }
         return shouldReload
     }
+    private fun shouldReloadForZoom(newZoom: Float): Boolean {
+        val lastZoom = lastZoomLevel ?: return true
+
+        // Calculate precision for old and new zoom
+        val oldPrecision = GeoUtils.zoomLevelToPrecision(lastZoom)
+        val newPrecision = GeoUtils.zoomLevelToPrecision(newZoom)
+
+        // Reload if precision changed (crossed a zoom threshold)
+        val shouldReload = oldPrecision != newPrecision
+
+        if (shouldReload) {
+            Log.d(TAG, "🔍 Zoom changed: $lastZoom → $newZoom (precision: $oldPrecision → $newPrecision)")
+        }
+
+        return shouldReload
+    }
 
     fun fetchUserLocation(context: Context, fusedLocationClient: FusedLocationProviderClient) {
         Log.d(TAG, "🔍 fetchUserLocation called")
@@ -115,8 +144,8 @@ class MapViewModel @Inject constructor(
                         _userLocation.value = userLatLng
                         Log.d(TAG, "📍 User location found: (${location.latitude}, ${location.longitude})")
 
-                        // Initial load based on user location
-                        loadParkingSpotsForCamera(userLatLng)
+                        // // Initial load with default zoom
+                        loadParkingSpotsForCamera(userLatLng, 15f)
                     } else {
                         Log.w(TAG, "⚠️ Location is null - GPS might not be ready yet")
                     }
