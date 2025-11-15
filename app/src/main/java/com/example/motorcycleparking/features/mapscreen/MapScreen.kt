@@ -17,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.motorcycleparking.R
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
+import com.example.motorcycleparking.core.core_ui.composable.rememberScaledMarker
 import com.example.motorcycleparking.domain.mockNames
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.maps.android.compose.Marker
@@ -36,6 +38,13 @@ fun MapScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchResults by remember { mutableStateOf(mockNames) }
 
+
+
+    val motorcycleIcon = rememberScaledMarker(
+        resId = R.drawable.mc_parking_icon,
+        sizePx = 96    // try 96 or 128, can tweak
+    )
+
     Box(modifier = modifier.fillMaxSize()) {
         // --- Google Maps Composable ---
         GoogleMapView(
@@ -51,6 +60,7 @@ fun MapScreen(
                     )
                 ),
                 title = spot.name,
+                icon = motorcycleIcon,
                 snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
                 onClick = { marker ->
                     marker.showInfoWindow()
