@@ -121,16 +121,29 @@ fun GoogleMapView(
         }
     }
 
-    // 🎯 NEW: Load parking spots when camera stops moving
+    // Load ALL spots visible on screen when camera stops moving
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
-            val cameraCenter = cameraPositionState.position.target
-            val zoomLevel = cameraPositionState.position.zoom
+            val projection = cameraPositionState.projection
 
-            Timber.d("Camera stopped at: ${cameraCenter.latitude}, ${cameraCenter.longitude}, zoom: $zoomLevel")
+            if (projection != null) {
+                // Get the actual visible region bounds via "google magic"
+                // Converts screen pixels to lagLng.
+                val visibleRegion = projection.visibleRegion
+                val bounds = visibleRegion.latLngBounds
 
-            // Load with zoom aware precision
-            mapViewModel.loadParkingSpotsForCamera(cameraCenter, zoomLevel)
+                Timber.d("📍 Camera stopped - visible area:")
+                Timber.d("   SW: (${bounds.southwest.latitude}, ${bounds.southwest.longitude})")
+                Timber.d("   NE: (${bounds.northeast.latitude}, ${bounds.northeast.longitude})")
+
+                // Load all spots in this bounding box
+                mapViewModel.loadParkingSpotsInBounds(
+                    swLat = bounds.southwest.latitude,
+                    swLng = bounds.southwest.longitude,
+                    neLat = bounds.northeast.latitude,
+                    neLng = bounds.northeast.longitude
+                )
+            }
         }
     }
 

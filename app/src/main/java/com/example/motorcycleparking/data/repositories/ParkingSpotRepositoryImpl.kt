@@ -16,4 +16,14 @@ class ParkingSpotRepositoryImpl @Inject constructor(
     ): Result<List<ParkingSpot>> {
         return firebaseRepo.getParkingspotsNearYou(geoPoint = geoPoint, precision = precision)
     }
+
+    override suspend fun getParkingSpotsInBounds(
+        swLat: Double,
+        swLng: Double,
+        neLat: Double,
+        neLng: Double
+    ): Result<List<ParkingSpot>> {
+        return firebaseRepo.getParkingSpotsInBounds(swLat, swLng, neLat, neLng)
+    }
+
 }

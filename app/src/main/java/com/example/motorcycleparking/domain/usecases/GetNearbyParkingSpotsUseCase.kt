@@ -14,4 +14,18 @@ class GetNearbyParkingSpotsUseCase @Inject constructor(
     ): Result<List<ParkingSpot>> {
         return repository.getNearbyParkingSpots(geoPoint, precision)
     }
+
+    suspend fun getInBounds(
+        swLat: Double,
+        swLng: Double,
+        neLat: Double,
+        neLng: Double
+    ): Result<List<ParkingSpot>> {
+        return repository.getParkingSpotsInBounds(
+            swLat = swLat,
+            swLng = swLng,
+            neLat = neLat,
+            neLng = neLng
+        )
+    }
 }

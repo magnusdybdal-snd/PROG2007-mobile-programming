@@ -8,4 +8,11 @@ interface ParkingSpotRepository {
         geoPoint: GeoPoint,
         precision: Int = 6
     ): Result<List<ParkingSpot>>
+
+    suspend fun getParkingSpotsInBounds(
+        swLat: Double,
+        swLng: Double,
+        neLat: Double,
+        neLng: Double
+    ): Result<List<ParkingSpot>>
 }
