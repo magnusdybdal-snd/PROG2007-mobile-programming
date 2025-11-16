@@ -3,6 +3,7 @@ package com.example.motorcycleparking.data.api
 import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.core.utils.getNeighbors
 import com.example.motorcycleparking.data.api.dto.FavoritesDto
+import com.example.motorcycleparking.data.api.dto.HistoryDto
 import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
 import com.example.motorcycleparking.data.api.dto.SearchDto
 import com.example.motorcycleparking.domain.models.ParkingSpot
@@ -197,7 +198,7 @@ class FirebaseRepo @Inject constructor(
         }
     }
 
-    suspend fun addToSearchHistory(userId: String, spotId: String) {
+    suspend fun addToSearchHistory(userId: String, spotId: String, searched: String) {
         val userRef = db.collection("users").document(userId)
         val historyCol = userRef.collection("search_history")
 
@@ -223,15 +224,36 @@ class FirebaseRepo @Inject constructor(
             val existingDoc = docs.find { it.getString("parkingspot_id") == spotId }
 
             val docRef = existingDoc?.reference ?: historyCol.document()
-            val data = mapOf(
-                "parkingspot_id" to spotId,
-                "timestamp" to Timestamp.now()
+            val data = HistoryDto(
+                parkingspot_id = spotId,
+                search = searched,
+                timestamp = Timestamp.now()
             )
 
             tx.set(docRef, data)
         }.await()
     }
 
+    suspend fun getSearchHistory(): Result<List<HistoryDto>> {
+        return try {
+            val userId =
+                auth.currentUser?.uid ?: return Result.failure(Exception("User not logged in"))
+
+            val history = db.collection("users")
+                .document(userId)
+                .collection("search_history")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .await()
+                .documents.mapNotNull { doc ->
+                    doc.toObject(HistoryDto::class.java)
+                }
+
+            Result.success(history)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     suspend fun getTitlesInSearch(search: String, limit: Long = 10): Result<List<SearchDto>> {
         return try {
