@@ -137,33 +137,24 @@ class FirebaseRepo @Inject constructor(
         }
     }
 
-    suspend fun getFavorites(userId: String): List<ParkingSpot> = coroutineScope {
-        try {
-            // Step 1: Fetch user's favorites
+    suspend fun getFavorites(userId: String): List<ParkingSpot> {
+        return try {
             val snapshot = db.collection("users")
                 .document(userId)
                 .get()
                 .await()
 
-            val favoriteIds = snapshot.toObject(FavoritesDto::class.java)
-                ?.ids
-                .orEmpty()
+            val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.ids.orEmpty()
+            if (favoriteIds.isEmpty()) return emptyList()
 
-            if (favoriteIds.isEmpty()) return@coroutineScope emptyList()
-
-            // Step 2: Firestore supports 10 items per whereIn query
-            val chunks = favoriteIds.chunked(10)
-
-            // Step 3: Run chunk fetches concurrently
-            val results = chunks.map { chunk ->
-                async {
-                    db.collection("parkingspots")
-                        .whereIn(FieldPath.documentId(), chunk)
-                        .get()
-                        .await()
-                        .documents
-                        .mapNotNull { doc ->
-                            val geo = doc.getGeoPoint("geo_point") ?: return@mapNotNull null
+            // Firestore allows 10 items per whereIn query
+            favoriteIds.chunked(10).flatMap { chunk ->
+                db.collection("parkingspots")
+                    .whereIn(FieldPath.documentId(), chunk)
+                    .get()
+                    .await()
+                    .documents.mapNotNull { doc ->
+                        doc.getGeoPoint("geo_point")?.let { geo ->
                             ParkingSpot(
                                 id = doc.id,
                                 name = doc.getString("name") ?: "",
@@ -174,11 +165,8 @@ class FirebaseRepo @Inject constructor(
                                 free = doc.getBoolean("free")
                             )
                         }
-                }
-            }.awaitAll().flatten()
-
-            // Step 4: Deduplicate and return
-            results.distinctBy { it.id }
+                    }
+            }.distinctBy { it.id }
 
         } catch (e: Exception) {
             Timber.tag("FirestoreError").e(e, "Error fetching favorites for user: $userId")
