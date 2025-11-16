@@ -15,11 +15,14 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
-import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.toObject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import javax.inject.Inject
@@ -110,26 +113,29 @@ class FirebaseRepo @Inject constructor(
         return auth.currentUser?.uid
     }
 
-    suspend fun toggleFavorite(userId: String, spotId: String) {
+    fun toggleFavorite(userId: String, spotId: String) {
         val userRef = db.collection("users").document(userId)
 
-        // Use a transaction to avoid race conditions
-        db.runTransaction { transaction ->
-            val snapshot = transaction.get(userRef)
-            val user = snapshot.toObject(FavoritesDto::class.java)
-            val favorites = user?.ids?.toMutableList() ?: mutableListOf()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                db.runTransaction { transaction ->
+                    val snapshot = transaction.get(userRef)
+                    val user = snapshot.toObject<FavoritesDto>() ?: FavoritesDto()
+                    val favorites = user.ids.toMutableList()
 
-            if (favorites.contains(spotId)) {
-                favorites.remove(spotId)
-            } else {
-                favorites.add(spotId)
+                    if (favorites.contains(spotId)) {
+                        favorites.remove(spotId)
+                    } else {
+                        favorites.add(spotId)
+                    }
+
+                    transaction.update(userRef, "favorites", favorites)
+                }.await()
+            } catch (e: Exception) {
+                Timber.tag("UpdatedFaves").e(e, "Failed to update favorites for $userId")
             }
-
-            transaction.set(userRef, mapOf("favorites" to favorites), SetOptions.merge())
-        }.await()
-        Timber.tag("UpdatedFaves").d("Updated favorites for $userId: $spotId")
+        }
     }
-
 
     suspend fun getFavorites(userId: String): List<ParkingSpot> = coroutineScope {
         try {
