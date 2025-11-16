@@ -199,7 +199,7 @@ class FirebaseRepo @Inject constructor(
 
     suspend fun addToSearchHistory(userId: String, spotId: String) {
         val userRef = db.collection("users").document(userId)
-        val historyCol = userRef.collection("searchHistory")
+        val historyCol = userRef.collection("search_history")
 
         val snapshot = historyCol
             .orderBy("timestamp", Query.Direction.DESCENDING)
@@ -220,13 +220,15 @@ class FirebaseRepo @Inject constructor(
                 tx.delete(doc.reference)
             }
 
-            val newDocRef = historyCol.document()
+            val existingDoc = docs.find { it.getString("parkingspot_id") == spotId }
+
+            val docRef = existingDoc?.reference ?: historyCol.document()
             val data = mapOf(
                 "parkingspot_id" to spotId,
                 "timestamp" to Timestamp.now()
             )
 
-            tx.set(newDocRef, data)
+            tx.set(docRef, data)
         }.await()
     }
 

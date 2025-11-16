@@ -32,22 +32,10 @@ class LoginViewModel @Inject constructor(
 
             try {
                 val uid = firebaseRepo.signInWithEmailPassword(email, password)
-                firebaseRepo.toggleFavorite(uid, "Nm9NhSyRYP0ZpSOk15pU")
-                Log.d(TAG, "Successfully logged in as $uid")
                 _uiState.value = LoginUiState(
                     isSignedIn = true,
                     userId = uid
                 )
-
-                val spots = firebaseRepo.getTitlesInSearch("n")
-                spots.onSuccess { spotList ->
-                    spotList.forEach { spot ->
-                        println("Found spot: $spot")
-                    }
-                }.onFailure { exception ->
-                    println("Error: ${exception.message}")
-                }
-
             } catch (e: Exception) {
                 Log.e(TAG, "Sign in failed", e)
                 _uiState.value = LoginUiState(
