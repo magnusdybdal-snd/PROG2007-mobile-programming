@@ -17,12 +17,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import javax.inject.Inject
@@ -113,27 +110,25 @@ class FirebaseRepo @Inject constructor(
         return auth.currentUser?.uid
     }
 
-    fun toggleFavorite(userId: String, spotId: String) {
+    suspend fun toggleFavorite(userId: String, spotId: String) {
         val userRef = db.collection("users").document(userId)
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                db.runTransaction { transaction ->
-                    val snapshot = transaction.get(userRef)
-                    val user = snapshot.toObject<FavoritesDto>() ?: FavoritesDto()
-                    val favorites = user.ids.toMutableList()
+        try {
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(userRef)
+                val user = snapshot.toObject<FavoritesDto>() ?: FavoritesDto()
+                val favorites = user.ids.toMutableList()
 
-                    if (favorites.contains(spotId)) {
-                        favorites.remove(spotId)
-                    } else {
-                        favorites.add(spotId)
-                    }
+                if (favorites.contains(spotId)) {
+                    favorites.remove(spotId)
+                } else {
+                    favorites.add(spotId)
+                }
+                transaction.update(userRef, "favorites", favorites)
+            }.await()
 
-                    transaction.update(userRef, "favorites", favorites)
-                }.await()
-            } catch (e: Exception) {
-                Timber.tag("UpdatedFaves").e(e, "Failed to update favorites for $userId")
-            }
+        } catch (e: Exception) {
+            Timber.tag("UpdatedFaves").e(e, "Failed to update favorites for $userId")
         }
     }
 
@@ -171,6 +166,32 @@ class FirebaseRepo @Inject constructor(
         } catch (e: Exception) {
             Timber.tag("FirestoreError").e(e, "Error fetching favorites for user: $userId")
             emptyList()
+        }
+    }
+
+    suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
+        return try {
+            val doc = db.collection("parkingspots")
+                .document(spotId)
+                .get()
+                .await()
+
+            val geo = doc.getGeoPoint("geo_point")
+                ?: return Result.failure(Exception("GeoPoint missing for spot $spotId"))
+
+            val spot = ParkingSpot(
+                id = doc.id,
+                name = doc.getString("name") ?: "",
+                note = doc.getString("note") ?: "",
+                displayAddress = doc.getString("display_address") ?: "",
+                latitude = geo.latitude,
+                longitude = geo.longitude,
+                free = doc.getBoolean("free")
+            )
+
+            Result.success(spot)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
