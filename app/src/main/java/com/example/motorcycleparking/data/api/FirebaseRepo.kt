@@ -8,6 +8,7 @@ import com.example.motorcycleparking.data.api.dto.SearchDto
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -15,6 +16,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.async
@@ -194,6 +196,40 @@ class FirebaseRepo @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun addToSearchHistory(userId: String, spotId: String) {
+        val userRef = db.collection("users").document(userId)
+        val historyCol = userRef.collection("searchHistory")
+
+        val snapshot = historyCol
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(20)
+            .get()
+            .await()
+
+        val docs = snapshot.documents
+
+        db.runTransaction { tx ->
+            val docsToRemove = if (docs.size >= 10) {
+                docs.drop(9)  // keep the newest 9, remove the rest
+            } else {
+                emptyList()
+            }
+
+            for (doc in docsToRemove) {
+                tx.delete(doc.reference)
+            }
+
+            val newDocRef = historyCol.document()
+            val data = mapOf(
+                "parkingspot_id" to spotId,
+                "timestamp" to Timestamp.now()
+            )
+
+            tx.set(newDocRef, data)
+        }.await()
+    }
+
 
     suspend fun getTitlesInSearch(search: String, limit: Long = 10): Result<List<SearchDto>> {
         return try {
