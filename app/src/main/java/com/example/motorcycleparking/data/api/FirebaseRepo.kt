@@ -1,10 +1,12 @@
 package com.example.motorcycleparking.data.api
 
+import android.util.Log
 import com.example.motorcycleparking.core.utils.encodeGeohash
+import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
+import com.example.motorcycleparking.data.api.dto.toDomain
 import com.example.motorcycleparking.core.utils.getNeighbors
 import com.example.motorcycleparking.data.api.dto.FavoritesDto
 import com.example.motorcycleparking.data.api.dto.HistoryDto
-import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
 import com.example.motorcycleparking.data.api.dto.SearchDto
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -73,40 +75,48 @@ class FirebaseRepo @Inject constructor(
         auth.signOut()
     }
 
-    suspend fun getParkingSpotsNearYou(
-        lat: Double,
-        lon: Double,
-        precision: Int = 6,
-    ): Result<List<ParkingSpotDto>> = try {
-        val geoHash = encodeGeohash(lat, lon, precision)
-        val geoHashNeighbors = getNeighbors(geoHash) + geoHash
+    suspend fun getParkingspotsNearYou(
+        geoPoint: GeoPoint,
+        precision: Int = 6
+    ): Result<List<ParkingSpot>> {
+        return try {
+            val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
+            val dtoList = mutableListOf<ParkingSpotDto>()
 
-        val results = coroutineScope {
-            geoHashNeighbors.map { hash ->
-                async {
-                    db.collection("parkingspots")
-                        .orderBy("geo_hash")
-                        .startAt(hash)
-                        .endAt(hash + "\uf8ff")
-                        .get()
-                        .await()
-                        .mapNotNull { doc ->
-                            ParkingSpotDto(
-                                name = doc.getString("name").orEmpty(),
-                                id = doc.id,
-                                note = doc.getString("note").orEmpty(),
-                                displayAddress = doc.getString("display_address").orEmpty(),
-                                geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
-                                free = doc.getBoolean("free") ?: false
-                            )
-                        }
-                }
-            }.awaitAll().flatten()
+            val geoHashNeighbors = getNeighbors(geoHash) + geoHash
+
+            val results = mutableListOf<ParkingSpot>()
+
+            val docs = db.collection("parkingspots")
+                .orderBy("geo_hash")
+                .startAt(geoHash)
+                .endAt(geoHash + "\uf8ff")
+                .get()
+                .await()
+
+            for (doc in docs) {
+                val dto = ParkingSpotDto(
+                    id = doc.id,
+                    name = doc.getString("name") ?: "",
+                    note = doc.getString("note") ?: "",
+                    displayAddress = doc.getString("display_address") ?: "",
+                    geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                )
+                dtoList.add(dto)
+                Log.d(
+                    "FirebaseRepo",
+                    "   Added spot: ${dto.name} at (${dto.geoPoint.latitude}, ${dto.geoPoint.longitude})"
+                )
+            }
+            val domainList = dtoList.toDomain()
+            Log.d("FirebaseRepo", "✅ Successfully fetched ${results.size} parking spots")
+            Result.success(domainList)
+
+        } catch (e: Exception) {
+            Log.e("FirebaseRepo", "❌ Error fetching from Firestore: ${e.message}", e)
+            Log.e("FirebaseRepo", "Error type: ${e.javaClass.simpleName}")
+            Result.failure(e)
         }
-        Result.success(results)
-    } catch (e: Exception) {
-        Timber.tag("ParkingFetch").e(e, "Error fetching parking spots")
-        Result.failure(e)
     }
 
     suspend fun getCurrentUserId(): String? {
@@ -284,4 +294,184 @@ class FirebaseRepo @Inject constructor(
             Result.failure(e)
         }
     }
+
+                Timber.tag("FirestoreError").e(e, "Error fetching favorites for user")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
+        return try {
+            val doc = db.collection("parkingspots")
+                .document(spotId)
+                .get()
+                .await()
+
+            val geo = doc.getGeoPoint("geo_point")
+                ?: return Result.failure(Exception("GeoPoint missing for spot $spotId"))
+
+            val spot = ParkingSpot(
+                id = doc.id,
+                name = doc.getString("name") ?: "",
+                note = doc.getString("note") ?: "",
+                displayAddress = doc.getString("display_address") ?: "",
+                latitude = geo.latitude,
+                longitude = geo.longitude,
+                free = doc.getBoolean("free")
+            )
+
+            Result.success(spot)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun addToSearchHistory(spotId: String, searched: String) {
+        val userId = auth.currentUser?.uid ?: return
+
+        val userRef = db.collection("users").document(userId)
+        val historyCol = userRef.collection("search_history")
+
+        val snapshot = historyCol
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(20)
+            .get()
+            .await()
+
+        val docs = snapshot.documents
+
+        db.runTransaction { tx ->
+            val docsToRemove = if (docs.size >= 10) {
+                docs.drop(9)  // keep the newest 9, remove the rest
+            } else {
+                emptyList()
+            }
+
+            for (doc in docsToRemove) {
+                tx.delete(doc.reference)
+            }
+
+            val existingDoc = docs.find { it.getString("parkingspot_id") == spotId }
+
+            val docRef = existingDoc?.reference ?: historyCol.document()
+            val data = HistoryDto(
+                parkingId = spotId,
+                search = searched,
+                timestamp = Timestamp.now()
+            )
+
+            tx.set(docRef, data)
+        }.await()
+    }
+
+    suspend fun getSearchHistory(): Result<List<HistoryDto>> {
+        return try {
+            val userId =
+                auth.currentUser?.uid ?: return Result.failure(Exception("User not logged in"))
+
+            val history = db.collection("users")
+                .document(userId)
+                .collection("search_history")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .await()
+                .documents.mapNotNull { doc ->
+                    doc.toObject(HistoryDto::class.java)
+                }
+
+            Result.success(history)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getTitlesInSearch(search: String, limit: Long = 10): Result<List<SearchDto>> {
+        return try {
+            val lowerSearch: String = search.lowercase()
+
+            val snapshot = db.collection("parkingspots")
+                .whereGreaterThanOrEqualTo("name_lowercase", lowerSearch)
+                .whereLessThanOrEqualTo("name_lowercase", lowerSearch + "\uf8ff")
+                .limit(limit)
+                .get()
+                .await()
+
+            val searchedResults = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(SearchDto::class.java)
+            }
+
+            Result.success(searchedResults)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+
+    /**
+     * Returns all parking spots within the visible map bounds.
+     *
+     * Fetches all spots from Firestore and filters by lat/lng coordinates.
+     * A spot is included if:
+     * - `swLat <= spot.latitude <= neLat`
+     * - `swLng <= spot.longitude <= neLng`
+     *
+     * @param swLat Bottom-left latitude
+     * @param swLng Bottom-left longitude
+     * @param neLat Top-right latitude
+     * @param neLng Top-right longitude
+     *
+     * @return Success with spots list, or Failure with exception
+     *
+     * Note: Uses client-side filtering. Fine for small datasets.
+     * Replace with geohash queries for production use with many spots.
+     */
+    suspend fun getParkingSpotsInBounds(
+        swLat: Double,
+        swLng: Double,
+        neLat: Double,
+        neLng: Double
+    ): Result<List<ParkingSpot>> {
+        Log.d("FirebaseRepo", "📡 Getting all spots in bounds")
+        Log.d("FirebaseRepo", "   SW: ($swLat, $swLng)")
+        Log.d("FirebaseRepo", "   NE: ($neLat, $neLng)")
+
+        return try {
+            val allDocs = db.collection("parkingspots")
+                .get()
+                .await()
+
+            Log.d("FirebaseRepo", "📦 Found ${allDocs.size()} total spots in database")
+
+            val spotsInBounds = mutableListOf<ParkingSpotDto>()
+
+            for (doc in allDocs) {
+                val point = doc.getGeoPoint("geo_point") ?: continue
+
+                // Check if spot is within bounds
+                if (point.latitude >= swLat &&
+                    point.latitude <= neLat &&
+                    point.longitude >= swLng &&
+                    point.longitude <= neLng) {
+
+                    val dto = ParkingSpotDto(
+                        id = doc.id,
+                        name = doc.getString("name") ?: "",
+                        note = doc.getString("note") ?: "",
+                        displayAddress = doc.getString("display_address") ?: "",
+                        geoPoint = point,
+                    )
+                    spotsInBounds.add(dto)
+                    Log.d("FirebaseRepo", "   ✅ ${dto.name} is in bounds")
+                }
+            }
+
+            Log.d("FirebaseRepo", "✅ ${spotsInBounds.size} spots within visible area")
+            Result.success(spotsInBounds.toDomain())
+
+        } catch (e: Exception) {
+            Log.e("FirebaseRepo", "❌ Error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }
+

@@ -1,11 +1,16 @@
 package com.example.motorcycleparking.core.utils
 
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import com.google.firebase.firestore.GeoPoint
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import androidx.core.net.toUri
 
 
 const val BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
@@ -144,4 +149,72 @@ fun encodeGeohash(lat: Double, lon: Double, precision: Int = 12): String {
     }
 
     return geohash.toString()
+}
+
+fun openGoogleMapsNavigation(
+    context: Context,
+    latitude: Double,
+    longitude: Double,
+    directNaviagtion: Boolean = true
+) {
+    try {
+        // Create URI for navigation
+        val uri = if (directNaviagtion) {
+            // Start navigation immediately (for favorites)
+            "google.navigation:q=$latitude,$longitude".toUri()
+        } else {
+            // Show route preview first (for regular spots)
+            "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude&travelmode=driving".toUri()
+        }
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            setPackage("com.google.android.apps.maps")
+        }
+
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        // Google maps app not installed, open in browser
+        Log.w("Navigation", "Google Maps app not available, falling back to browser", e)
+        try {
+            val browserUri =
+                "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude".toUri()
+            val browserIntent = Intent(Intent.ACTION_VIEW, browserUri)
+            context.startActivity(browserIntent)
+        } catch (e: Exception) {
+            Log.e("Navigation", "Failed to open maps in browser", e)
+            Toast.makeText(context, "Unable to open maps", Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+object GeoUtils {
+    /**
+     * Convert Google Maps zoom level to geohash precision
+     * Higher zoom = more precision = more geohash characters
+     */
+    fun zoomLevelToPrecision(zoom: Float): Int {
+        return when {
+            zoom < 6f -> 3   // Very zoomed out - city level
+            zoom < 9f -> 4   // Zoomed out - district level
+            zoom < 12f -> 5  // Medium zoom - neighborhood level
+            zoom < 15f -> 6  // Zoomed in - street level
+            zoom < 18f -> 7  // Very zoomed in - building level
+            else -> 8        // Maximum zoom - precise location
+        }
+    }
+
+    /**
+     * Get approximate search radius in meters for a given precision
+     * Useful for debugging or showing to users
+     */
+    fun precisionToRadius(precision: Int): Double {
+        return when (precision) {
+            3 -> 78000.0    // ~78 km
+            4 -> 19500.0    // ~19.5 km
+            5 -> 2440.0     // ~2.4 km
+            6 -> 610.0      // ~610 m
+            7 -> 76.0       // ~76 m
+            8 -> 19.0       // ~19 m
+            else -> 610.0   // Default to precision 6
+        }
+    }
 }

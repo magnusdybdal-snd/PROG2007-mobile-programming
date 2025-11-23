@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,11 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.motorcycleparking.R
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
+import com.example.motorcycleparking.core.core_ui.composable.rememberScaledMarker
 import com.example.motorcycleparking.domain.mockNames
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 
 @Composable
 fun MapScreen(
@@ -30,14 +35,40 @@ fun MapScreen(
     settingsViewModel: SettingsViewModel
 ) {
     val textFieldState = remember { TextFieldState() }
+    val uiState by viewModel.uiState.collectAsState()
     var searchResults by remember { mutableStateOf(mockNames) }
+
+
+
+    val motorcycleIcon = rememberScaledMarker(
+        resId = R.drawable.mc_parking_icon,
+        sizePx = 96    // try 96 or 128, can tweak
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         // --- Google Maps Composable ---
         GoogleMapView(
             mapViewModel = viewModel,
             settingsViewModel = settingsViewModel
-        )
+        ){
+        uiState.spots.forEach { spot ->
+            Marker(
+                state = MarkerState(
+                    position = com.google.android.gms.maps.model.LatLng(
+                        spot.latitude ?: 0.0,
+                        spot.longitude ?: 0.0
+                    )
+                ),
+                title = spot.name,
+                icon = motorcycleIcon,
+                snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
+                onClick = { marker ->
+                    marker.showInfoWindow()
+                    true
+                }
+            )
+        }
+        }
 
         // --- Search Bar Composable ---
         SimpleSearchBar(
