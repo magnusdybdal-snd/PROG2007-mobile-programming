@@ -36,6 +36,7 @@ class LoginViewModel @Inject constructor(
                     isSignedIn = true,
                     userId = uid
                 )
+
             } catch (e: Exception) {
                 Log.e(TAG, "Sign in failed", e)
                 _uiState.value = LoginUiState(

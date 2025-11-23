@@ -113,7 +113,9 @@ class FirebaseRepo @Inject constructor(
         return auth.currentUser?.uid
     }
 
-    suspend fun toggleFavorite(userId: String, spotId: String) {
+    suspend fun toggleFavorite(spotId: String) {
+        val userId = auth.currentUser?.uid ?: return
+
         val userRef = db.collection("users").document(userId)
 
         try {
@@ -135,18 +137,21 @@ class FirebaseRepo @Inject constructor(
         }
     }
 
-    suspend fun getFavorites(userId: String): List<ParkingSpot> {
+    suspend fun getFavorites(): Result<List<ParkingSpot>> {
         return try {
+            val userId =
+                auth.currentUser?.uid ?: return Result.failure(Exception("Unable to fetch user"))
+
             val snapshot = db.collection("users")
                 .document(userId)
                 .get()
                 .await()
 
             val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.ids.orEmpty()
-            if (favoriteIds.isEmpty()) return emptyList()
+            if (favoriteIds.isEmpty()) return Result.success(emptyList())
 
             // Firestore allows 10 items per whereIn query
-            favoriteIds.chunked(10).flatMap { chunk ->
+            val spots = favoriteIds.chunked(10).flatMap { chunk ->
                 db.collection("parkingspots")
                     .whereIn(FieldPath.documentId(), chunk)
                     .get()
@@ -166,9 +171,11 @@ class FirebaseRepo @Inject constructor(
                     }
             }.distinctBy { it.id }
 
+            Result.success(spots)
+
         } catch (e: Exception) {
-            Timber.tag("FirestoreError").e(e, "Error fetching favorites for user: $userId")
-            emptyList()
+            Timber.tag("FirestoreError").e(e, "Error fetching favorites for user")
+            Result.failure(e)
         }
     }
 
@@ -198,7 +205,9 @@ class FirebaseRepo @Inject constructor(
         }
     }
 
-    suspend fun addToSearchHistory(userId: String, spotId: String, searched: String) {
+    suspend fun addToSearchHistory(spotId: String, searched: String) {
+        val userId = auth.currentUser?.uid ?: return
+
         val userRef = db.collection("users").document(userId)
         val historyCol = userRef.collection("search_history")
 
@@ -225,7 +234,7 @@ class FirebaseRepo @Inject constructor(
 
             val docRef = existingDoc?.reference ?: historyCol.document()
             val data = HistoryDto(
-                parkingspot_id = spotId,
+                parkingId = spotId,
                 search = searched,
                 timestamp = Timestamp.now()
             )
