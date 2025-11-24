@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,8 +34,12 @@ import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
 import com.example.motorcycleparking.core.core_ui.composable.rememberScaledMarker
 import com.example.motorcycleparking.domain.mockNames
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.launch
 
 @Composable
 fun MapScreen(
@@ -48,7 +53,8 @@ fun MapScreen(
     var searchResults by remember { mutableStateOf(mockNames) }
     var selectedSpot by remember { mutableStateOf<com.example.motorcycleparking.domain.models.ParkingSpot?>(null) }
 
-
+    val cameraPositionState = rememberCameraPositionState()
+    val coroutineScope = rememberCoroutineScope()
 
     val motorcycleIcon = rememberScaledMarker(
         resId = R.drawable.mc_parking_icon,
@@ -59,21 +65,32 @@ fun MapScreen(
         // --- Google Maps Composable ---
         GoogleMapView(
             mapViewModel = viewModel,
-            settingsViewModel = settingsViewModel
+            settingsViewModel = settingsViewModel,
+            cameraPositionState = cameraPositionState
         ){
         uiState.spots.forEach { spot ->
+            val markerPosition = LatLng(
+                spot.latitude ?: 0.0,
+                spot.longitude ?: 0.0
+            )
+
             Marker(
-                state = MarkerState(
-                    position = com.google.android.gms.maps.model.LatLng(
-                        spot.latitude ?: 0.0,
-                        spot.longitude ?: 0.0
-                    )
-                ),
+                state = MarkerState(position = markerPosition),
                 title = spot.name,
                 icon = motorcycleIcon,
                 snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
                 onClick = {
                     selectedSpot = spot
+                    // Animate camera to center on the marker
+                    coroutineScope.launch {
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newLatLngZoom(
+                                markerPosition,
+                                15f // Zoom level
+                            ),
+                            durationMs = 500 // Animation duration
+                        )
+                    }
                     true
                 }
             )
@@ -108,9 +125,11 @@ fun MapScreen(
                     }
             )
 
-            // Card wrapper with close button
+            // Card wrapper with close button - positioned in center area near marker
             Box(
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(y = 80.dp) // Offset below center to appear just under marker
             ) {
                 ParkingSpotCard(
                     parkingSpot = spot,
