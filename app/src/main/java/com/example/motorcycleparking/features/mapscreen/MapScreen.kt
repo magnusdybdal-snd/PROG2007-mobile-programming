@@ -20,6 +20,7 @@ import androidx.navigation.NavController
 import com.example.motorcycleparking.R
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
+import com.example.motorcycleparking.core.core_ui.composable.ParkingSpotCard
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
 import com.example.motorcycleparking.core.core_ui.composable.rememberScaledMarker
 import com.example.motorcycleparking.domain.mockNames
@@ -37,6 +38,7 @@ fun MapScreen(
     val textFieldState = remember { TextFieldState() }
     val uiState by viewModel.uiState.collectAsState()
     var searchResults by remember { mutableStateOf(mockNames) }
+    var selectedSpot by remember { mutableStateOf<com.example.motorcycleparking.domain.models.ParkingSpot?>(null) }
 
 
 
@@ -63,6 +65,7 @@ fun MapScreen(
                 icon = motorcycleIcon,
                 snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
                 onClick = { marker ->
+                    selectedSpot = spot
                     marker.showInfoWindow()
                     true
                 }
@@ -83,6 +86,17 @@ fun MapScreen(
             searchResults = searchResults,
             modifier = Modifier.align(Alignment.TopCenter)
         )
+
+        // --- Parking Spot Card ---
+        selectedSpot?.let { spot ->
+            ParkingSpotCard(
+                parkingSpot = spot,
+                onFavoriteClick = {
+                    // TODO: Implement favorite functionality
+                },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
 
         // TODO remove, this is a temporary button
         Button(
