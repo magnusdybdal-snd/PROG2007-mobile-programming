@@ -1,10 +1,18 @@
 package com.example.motorcycleparking.features.mapscreen
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -64,9 +72,8 @@ fun MapScreen(
                 title = spot.name,
                 icon = motorcycleIcon,
                 snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
-                onClick = { marker ->
+                onClick = {
                     selectedSpot = spot
-                    marker.showInfoWindow()
                     true
                 }
             )
@@ -87,15 +94,49 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
-        // --- Parking Spot Card ---
+        // --- Parking Spot Card with dismiss functionality ---
         selectedSpot?.let { spot ->
-            ParkingSpotCard(
-                parkingSpot = spot,
-                onFavoriteClick = {
-                    // TODO: Implement favorite functionality
-                },
-                modifier = Modifier.align(Alignment.BottomCenter)
+            // Clickable overlay to dismiss card when tapping outside
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        selectedSpot = null
+                    }
             )
+
+            // Card wrapper with close button
+            Box(
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                ParkingSpotCard(
+                    parkingSpot = spot,
+                    onFavoriteClick = {
+                        // TODO: Implement favorite functionality
+                    },
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { /* Prevent click through */ }
+                )
+
+                // Close button in top-right corner of card
+                IconButton(
+                    onClick = { selectedSpot = null },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-8).dp, y = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Close",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         }
 
         // TODO remove, this is a temporary button
