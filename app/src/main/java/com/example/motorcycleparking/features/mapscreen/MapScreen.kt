@@ -81,13 +81,10 @@ fun MapScreen(
                 snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
                 onClick = {
                     selectedSpot = spot
-                    // Animate camera to center on the marker
+                    // Animate camera to center on the marker (maintains current zoom)
                     coroutineScope.launch {
                         cameraPositionState.animate(
-                            update = CameraUpdateFactory.newLatLngZoom(
-                                markerPosition,
-                                15f // Zoom level
-                            ),
+                            update = CameraUpdateFactory.newLatLng(markerPosition),
                             durationMs = 500 // Animation duration
                         )
                     }
