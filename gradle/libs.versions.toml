@@ -17,6 +17,7 @@ hilt = "2.57.2"
 hiltNavigationCompose = "1.2.0"
 kotlinxSerialization = "1.7.3"
 playServicesLocation = "21.3.0"
+playServicesAuth = "21.2.0"
 timber = "5.0.1"
 
 [libraries]
@@ -54,6 +55,7 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 # Kotlinx Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

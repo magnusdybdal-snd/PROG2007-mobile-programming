@@ -1,6 +1,9 @@
 package com.example.motorcycleparking.features.loginscreen
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,9 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.motorcycleparking.R
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
 import com.example.workoutapp.core.core_ui.composable.LoadingStateView
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 @Composable
 fun LoginScreen(
@@ -45,6 +52,31 @@ fun LoginScreen(
 
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+
+    // Google Sign-In configuration
+    val googleSignInOptions = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+    }
+
+    val googleSignInClient = remember {
+        GoogleSignIn.getClient(context as Activity, googleSignInOptions)
+    }
+
+    // Launcher for Google Sign-In
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            viewModel.signInWithGoogle(account)
+        } catch (e: ApiException) {
+            Toast.makeText(context, "Google sign in failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
 
     // Side effect: Navigate to map screen on success
     LaunchedEffect(uiState.isSignedIn) {
@@ -118,7 +150,10 @@ fun LoginScreen(
                         Text("Login")
                     }
                     GoogleSignInButton(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            val signInIntent = googleSignInClient.signInIntent
+                            googleSignInLauncher.launch(signInIntent)
+                        },
                     )
                     // --- Register Text ---
                     Text(
