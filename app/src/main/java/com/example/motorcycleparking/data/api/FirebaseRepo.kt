@@ -99,6 +99,7 @@ class FirebaseRepo @Inject constructor(
                         note = doc.getString("note") ?: "",
                         displayAddress = doc.getString("display_address") ?: "",
                         geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                        free = doc.getBoolean("free") ?: false
                     )
                     dtoList.add(dto)
                     Log.d(
@@ -366,6 +367,7 @@ class FirebaseRepo @Inject constructor(
                         note = doc.getString("note") ?: "",
                         displayAddress = doc.getString("display_address") ?: "",
                         geoPoint = point,
+                        free = doc.getBoolean("free") ?: false
                     )
                     spotsInBounds.add(dto)
                     Log.d("FirebaseRepo", "   ✅ ${dto.name} is in bounds")
