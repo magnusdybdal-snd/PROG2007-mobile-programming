@@ -81,8 +81,8 @@ fun LoginScreen(
     // Side effect: Navigate to map screen on success
     LaunchedEffect(uiState.isSignedIn) {
         if (uiState.isSignedIn) {
-            navController.navigate("map") {
-                popUpTo("login") { inclusive = true }
+            navController.navigate(Routes.MAP) {
+                popUpTo(0) { inclusive = true } // Ensures LoginScreen isn't accessible after sign-in.
             }
         }
     }
