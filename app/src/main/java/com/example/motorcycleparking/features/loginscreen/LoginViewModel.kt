@@ -32,9 +32,8 @@ class LoginViewModel @Inject constructor(
     private fun checkAuthState() {
         viewModelScope.launch {
             val userId = firebaseRepo.getCurrentUserId()
-            Log.d(TAG, "checkAuthLaunchState")
             if (userId != null) {
-                Log.d(TAG, "found user with 'userId': $userId")
+                Log.d(TAG, "Found user with 'userId': $userId")
                 _uiState.value = LoginUiState(
                     isSignedIn = true,
                     userId = userId
