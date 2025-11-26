@@ -152,37 +152,25 @@ class FirebaseRepo @Inject constructor(
             val userId =
                 auth.currentUser?.uid ?: return Result.failure(Exception("Unable to fetch user"))
 
-            Log.d("FirebaseRepo", "Getting favorites for user: $userId")
-
             val snapshot = db.collection("users")
                 .document(userId)
                 .get()
                 .await()
 
-            Log.d("FirebaseRepo", "📦 Snapshot exists: ${snapshot.exists()}")
-            Log.d("FirebaseRepo", "📦 Raw snapshot data: ${snapshot.data}")
-
             val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.favorites.orEmpty()
-            Log.d("FirebaseRepo", "📋 Favorite IDs: $favoriteIds (count: ${favoriteIds.size})")
 
             if (favoriteIds.isEmpty()) {
-                Log.d("FirebaseRepo", "⚠️ No favorite IDs found, returning empty list")
                 return Result.success(emptyList())
             }
 
-
             // Firestore allows 10 items per whereIn query
             val spots = favoriteIds.chunked(10).flatMap { chunk ->
-                Log.d("FirebaseRepo", "🔍 Fetching chunk: $chunk")
                 val docs = db.collection("parkingspots")
                     .whereIn(FieldPath.documentId(), chunk)
                     .get()
                     .await()
 
-                Log.d("FirebaseRepo", "📦 Found ${docs.size()} documents for chunk")
-
                     docs.documents.mapNotNull { doc ->
-                        Log.d("FirebaseRepo", "   📍 Processing doc: ${doc.id}")
                         doc.getGeoPoint("geo_point")?.let { geo ->
                             ParkingSpot(
                                 id = doc.id,
@@ -196,12 +184,9 @@ class FirebaseRepo @Inject constructor(
                         }
                     }
             }.distinctBy { it.id }
-
-            Log.d("FirebaseRepo", "✅ Returning ${spots.size} favorite parking spots")
             Result.success(spots)
 
         } catch (e: Exception) {
-            Log.e("FirebaseRepo", "❌ Error fetching favorites", e)
             Timber.tag("FirestoreError").e(e, "Error fetching favorites for user")
             Result.failure(e)
         }
