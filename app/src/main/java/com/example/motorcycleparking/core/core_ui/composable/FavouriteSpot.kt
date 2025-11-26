@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.runtime.getValue
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ColorScheme
@@ -18,7 +20,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,11 +38,13 @@ import com.example.motorcycleparking.domain.models.ParkingSpot
 fun ParkingSpotCard(
     modifier: Modifier = Modifier,
     parkingSpot: ParkingSpot,
+    isFavorite: Boolean = false,
     onFavoriteClick: () -> Unit = {},
     cs: ColorScheme = MaterialTheme.colorScheme
 ) {
     val context = LocalContext.current
     var showNavigationDialog by remember { mutableStateOf(false) }
+    var showFavoriteDialog by remember { mutableStateOf(false) }
 
     // Show confirmation dialog with parking spot name
     if (showNavigationDialog) {
@@ -63,6 +66,21 @@ fun ParkingSpotCard(
             },
             onDismiss = {
                 showNavigationDialog = false
+            }
+        )
+    }
+
+    // Show confirmation dialog if toggling favorite
+    if (showFavoriteDialog) {
+        FavoriteConfirmationDialog(
+            parkingSpotName = parkingSpot.name,
+            isFavorite = isFavorite,
+            onConfirm = {
+                showFavoriteDialog = false
+                onFavoriteClick()
+            },
+            onDismiss = {
+                showFavoriteDialog = false
             }
         )
     }
@@ -124,12 +142,22 @@ fun ParkingSpotCard(
             }
             // Heart icon to toggle favorite
             IconButton(
-                onClick = onFavoriteClick
+                onClick = {
+                    showFavoriteDialog = true
+                }
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = "Favorite",
-                    tint = cs.primary
+                    imageVector = if (isFavorite) {
+                        Icons.Filled.Favorite
+                    } else {
+                        Icons.Outlined.FavoriteBorder
+                    },
+                    contentDescription = if (isFavorite) {
+                        "Remove from favorites"
+                    } else {
+                        "Add to favorites"
+                    },
+                    tint = if (isFavorite) cs.primary else cs.onSurfaceVariant
                 )
             }
         }

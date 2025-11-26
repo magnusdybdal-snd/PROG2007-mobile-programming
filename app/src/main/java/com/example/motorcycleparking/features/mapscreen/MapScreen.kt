@@ -50,6 +50,7 @@ fun MapScreen(
 ) {
     val textFieldState = remember { TextFieldState() }
     val uiState by viewModel.uiState.collectAsState()
+    val favoriteIds by viewModel.favoriteIds.collectAsState()
     var searchResults by remember { mutableStateOf(mockNames) }
     var selectedSpot by remember { mutableStateOf<com.example.motorcycleparking.domain.models.ParkingSpot?>(null) }
 
@@ -130,8 +131,9 @@ fun MapScreen(
             ) {
                 ParkingSpotCard(
                     parkingSpot = spot,
+                    isFavorite = spot.id in favoriteIds,
                     onFavoriteClick = {
-                        // TODO: Implement favorite functionality
+                        viewModel.toggleFavorite(spot.id ?: "")
                     },
                     modifier = Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },

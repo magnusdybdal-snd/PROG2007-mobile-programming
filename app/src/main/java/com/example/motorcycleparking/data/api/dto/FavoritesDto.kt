@@ -1,7 +1,7 @@
 package com.example.motorcycleparking.data.api.dto
 
 data class FavoritesDto(
-    val ids: List<String>
+    val favorites: List<String> = emptyList()
 ) {
-    constructor() : this(listOf())
+    constructor() : this(emptyList())
 }

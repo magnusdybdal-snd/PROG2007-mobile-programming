@@ -9,7 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.motorcycleparking.data.api.FirebaseRepo
 import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.ToggleFavoriteUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -26,7 +28,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase
+    private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
+    private val firebaseRepo: FirebaseRepo,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
     companion object {
@@ -40,7 +44,12 @@ class MapViewModel @Inject constructor(
     val userLocation: State<LatLng?> = _userLocation
     private var locationCallback: LocationCallback? = null
 
+    // Track favorite parking spot IDs
+    private val _favoriteIds = MutableStateFlow<Set<String>>(emptySet())
+    val favoriteIds: StateFlow<Set<String>> = _favoriteIds.asStateFlow()
+
     init {
+        loadFavorites()
         Log.d(TAG, "MapViewModel initialized")
     }
 
@@ -171,5 +180,47 @@ class MapViewModel @Inject constructor(
         super.onCleared()
         Log.d(TAG, "🧹 MapViewModel cleared")
         locationCallback = null
+    }
+
+    // Load user's favorite parking spots
+    private fun loadFavorites() {
+        viewModelScope.launch {
+            try {
+                firebaseRepo.getFavorites()
+                    .onSuccess { favorites ->
+                        _favoriteIds.value = favorites.mapNotNull { it.id }.toSet()
+                        Log.d(TAG, "Loaded ${favorites.size} favorites")
+                    }
+                    .onFailure { e ->
+                        Log.e(TAG, "Error loading favorites", e)
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading favorites", e)
+            }
+        }
+    }
+
+    // Toggle favorite status for a parking spot
+    fun toggleFavorite(spotId: String) {
+        viewModelScope.launch {
+            toggleFavoriteUseCase(spotId)
+                .onSuccess {
+                    // Update local state
+                    _favoriteIds.value = if (spotId in _favoriteIds.value) {
+                        _favoriteIds.value - spotId
+                    } else {
+                        _favoriteIds.value + spotId
+                    }
+                    Log.d(TAG, "Toggled favorite for spot: $spotId")
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "Error toggling favorite", e)
+                }
+        }
+    }
+
+    // Check if a parking spot is favorited
+    fun isFavorite(spotId: String): Boolean {
+        return spotId in _favoriteIds.value
     }
 }

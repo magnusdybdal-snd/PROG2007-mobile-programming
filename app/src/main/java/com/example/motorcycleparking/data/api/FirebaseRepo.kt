@@ -99,6 +99,7 @@ class FirebaseRepo @Inject constructor(
                         note = doc.getString("note") ?: "",
                         displayAddress = doc.getString("display_address") ?: "",
                         geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                        free = doc.getBoolean("free") ?: false
                     )
                     dtoList.add(dto)
                     Log.d(
@@ -131,7 +132,7 @@ class FirebaseRepo @Inject constructor(
             db.runTransaction { transaction ->
                 val snapshot = transaction.get(userRef)
                 val user = snapshot.toObject<FavoritesDto>() ?: FavoritesDto()
-                val favorites = user.ids.toMutableList()
+                val favorites = user.favorites.toMutableList()
 
                 if (favorites.contains(spotId)) {
                     favorites.remove(spotId)
@@ -156,16 +157,20 @@ class FirebaseRepo @Inject constructor(
                 .get()
                 .await()
 
-            val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.ids.orEmpty()
-            if (favoriteIds.isEmpty()) return Result.success(emptyList())
+            val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.favorites.orEmpty()
+
+            if (favoriteIds.isEmpty()) {
+                return Result.success(emptyList())
+            }
 
             // Firestore allows 10 items per whereIn query
             val spots = favoriteIds.chunked(10).flatMap { chunk ->
-                db.collection("parkingspots")
+                val docs = db.collection("parkingspots")
                     .whereIn(FieldPath.documentId(), chunk)
                     .get()
                     .await()
-                    .documents.mapNotNull { doc ->
+
+                    docs.documents.mapNotNull { doc ->
                         doc.getGeoPoint("geo_point")?.let { geo ->
                             ParkingSpot(
                                 id = doc.id,
@@ -179,7 +184,6 @@ class FirebaseRepo @Inject constructor(
                         }
                     }
             }.distinctBy { it.id }
-
             Result.success(spots)
 
         } catch (e: Exception) {
@@ -348,6 +352,7 @@ class FirebaseRepo @Inject constructor(
                         note = doc.getString("note") ?: "",
                         displayAddress = doc.getString("display_address") ?: "",
                         geoPoint = point,
+                        free = doc.getBoolean("free") ?: false
                     )
                     spotsInBounds.add(dto)
                     Log.d("FirebaseRepo", "   ✅ ${dto.name} is in bounds")
