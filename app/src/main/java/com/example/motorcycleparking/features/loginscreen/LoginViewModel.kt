@@ -24,6 +24,25 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
+    init {
+        // Check if user is already signed in
+        checkAuthState()
+    }
+
+    private fun checkAuthState() {
+        viewModelScope.launch {
+            val userId = firebaseRepo.getCurrentUserId()
+            Log.d(TAG, "checkAuthLaunchState")
+            if (userId != null) {
+                Log.d(TAG, "found user with 'userId': $userId")
+                _uiState.value = LoginUiState(
+                    isSignedIn = true,
+                    userId = userId
+                )
+            }
+        }
+    }
+
     fun signInWithGoogle(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _uiState.value = LoginUiState(
