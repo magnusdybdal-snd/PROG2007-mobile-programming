@@ -46,7 +46,7 @@ fun ParkingSpotCard(
     var showNavigationDialog by remember { mutableStateOf(false) }
     var showFavoriteDialog by remember { mutableStateOf(false) }
 
-    // Show confirmation dialog when navigating
+    // Show confirmation dialog with parking spot name
     if (showNavigationDialog) {
         NavigationConfirmationDialog(
             parkingSpotName = parkingSpot.name,
@@ -103,6 +103,7 @@ fun ParkingSpotCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
+                //placeholder = painterResource(R.drawable.exampleworkoutimage), // While loading
                 parkingSpot.name?.let {
                     Text(
                         text = it,

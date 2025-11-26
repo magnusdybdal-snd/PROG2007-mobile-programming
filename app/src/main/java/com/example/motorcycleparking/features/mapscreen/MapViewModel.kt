@@ -10,7 +10,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.motorcycleparking.data.api.FirebaseRepo
-import com.example.motorcycleparking.domain.usecases.GetAllParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.ToggleFavoriteUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -24,19 +25,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
-import androidx.compose.runtime.getValue
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val getAllParkingSpotsUseCase: GetAllParkingSpotsUseCase,
-    private val firebaseRepo: FirebaseRepo
+    private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
+    private val firebaseRepo: FirebaseRepo,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
     companion object {
         private const val TAG = "MapViewModel"
     }
 
-    private val _uiState = MutableStateFlow<MapUiState>(MapUiState(isLoading = true))
+    private val _uiState = MutableStateFlow(MapUiState(isLoading = true))
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
     private val _userLocation = mutableStateOf<LatLng?>(null)
@@ -48,15 +49,35 @@ class MapViewModel @Inject constructor(
     val favoriteIds: StateFlow<Set<String>> = _favoriteIds.asStateFlow()
 
     init {
-        loadParkingSpots()
         loadFavorites()
+        Log.d(TAG, "MapViewModel initialized")
     }
 
-    private fun loadParkingSpots() {
+    // Load parking spots based on camera position
+    fun loadParkingSpotsInBounds(
+        swLat: Double,
+        swLng: Double,
+        neLat: Double,
+        neLng: Double
+    ) {
+        Log.d(TAG, "📍 Loading spots for visible bounds")
+        Log.d(TAG, "   SW: ($swLat, $swLng)")
+        Log.d(TAG, "   NE: ($neLat, $neLng)")
+
         viewModelScope.launch {
-            getAllParkingSpotsUseCase()
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            getNearbyParkingSpotsUseCase.getInBounds(
+                swLat = swLat,
+                swLng = swLng,
+                neLat = neLat,
+                neLng = neLng
+            )
                 .onSuccess { parkingSpots ->
-                    Log.d(TAG, "Received ${parkingSpots.size} parking spots from firestore")
+                    Log.d(TAG, "✅ Found ${parkingSpots.size} spots in visible area")
+                    parkingSpots.forEachIndexed { index, spot ->
+                        Log.d(TAG, "   📍 ${index + 1}. ${spot.name}")
+                    }
 
                     _uiState.value = MapUiState(
                         isLoading = false,
@@ -64,7 +85,7 @@ class MapViewModel @Inject constructor(
                     )
                 }
                 .onFailure { exception ->
-                    Log.e(TAG, "Error loading parking spots from firestore", exception)
+                    Log.e(TAG, "❌ Error: ${exception.message}", exception)
                     _uiState.value = MapUiState(
                         isLoading = false,
                         errorMessage = exception.message ?: "Unknown error"
@@ -73,49 +94,63 @@ class MapViewModel @Inject constructor(
         }
     }
 
-
-    // Function to fetch the user's location and update the state
     fun fetchUserLocation(context: Context, fusedLocationClient: FusedLocationProviderClient) {
-        if (ContextCompat.checkSelfPermission( // Check if the location permission is granted
+        Log.d(TAG, "🔍 fetchUserLocation called")
+
+        if (ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
+            Log.d(TAG, "✅ Location permission granted")
             try {
-                // Fetch the last known location
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    location?.let {
-                        // Update the user's location in the state
-                        val userLatLng = LatLng(it.latitude, it.longitude)
+                    if (location != null) {
+                        val userLatLng = LatLng(location.latitude, location.longitude)
                         _userLocation.value = userLatLng
+                        Log.d(TAG, "📍 User location found: (${location.latitude}, ${location.longitude})")
+
+                        // Don't load spots here - let the map camera do it when it's ready
+                    } else {
+                        Log.w(TAG, "⚠️ Location is null - GPS might not be ready yet")
                     }
+                }.addOnFailureListener { exception ->
+                    Log.e(TAG, "❌ Failed to get location: ${exception.message}", exception)
                 }
             } catch (e: SecurityException) {
-                Timber.e("Permission for location access was revoked: ${e.localizedMessage}")
+                Log.e(TAG, "❌ SecurityException: ${e.localizedMessage}", e)
             }
         } else {
-            Timber.e("Location permission is not granted.")
+            Log.e(TAG, "❌ Location permission NOT granted")
         }
     }
 
-    fun startLocationUpdates(context: Context, fusedLocationClient: FusedLocationProviderClient){
+    fun startLocationUpdates(context: Context, fusedLocationClient: FusedLocationProviderClient) {
+        Log.d(TAG, "🔄 startLocationUpdates called")
+
         if (ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_DENIED
+            ) == PackageManager.PERMISSION_DENIED
         ) {
+            Log.e(TAG, "❌ Cannot start location updates - permission denied")
             return
         }
+
+        Log.d(TAG, "✅ Setting up location updates...")
+
         val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY, 10000L // Update every 10 seconds.
-        ).apply{
-            setMinUpdateIntervalMillis(5000L) // Fastest update every 5 seconds
+            Priority.PRIORITY_HIGH_ACCURACY, 10000L
+        ).apply {
+            setMinUpdateIntervalMillis(5000L)
         }.build()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    _userLocation.value = LatLng(location.latitude, location.longitude)
+                    val newLocation = LatLng(location.latitude, location.longitude)
+                    Log.d(TAG, "📍 Location update: (${location.latitude}, ${location.longitude})")
+                    _userLocation.value = newLocation
                 }
             }
         }
@@ -126,19 +161,24 @@ class MapViewModel @Inject constructor(
                 locationCallback!!,
                 Looper.getMainLooper()
             )
+            Log.d(TAG, "✅ Location updates started successfully")
         } catch (e: SecurityException) {
+            Log.e(TAG, "❌ Error requesting location updates: ${e.localizedMessage}", e)
             Timber.e("Error requesting location updates: ${e.localizedMessage}")
         }
     }
 
     fun stopLocationUpdates(fusedLocationClient: FusedLocationProviderClient) {
+        Log.d(TAG, "⏹️ Stopping location updates")
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
+            Log.d(TAG, "✅ Location updates stopped")
         }
     }
 
     override fun onCleared() {
         super.onCleared()
+        Log.d(TAG, "🧹 MapViewModel cleared")
         locationCallback = null
     }
 
@@ -146,10 +186,14 @@ class MapViewModel @Inject constructor(
     private fun loadFavorites() {
         viewModelScope.launch {
             try {
-                val userId = firebaseRepo.getCurrentUserId() ?: return@launch
-                val favorites = firebaseRepo.getFavorites(userId)
-                _favoriteIds.value = favorites.mapNotNull { it.id }.toSet()
-                Log.d(TAG, "Loaded ${favorites.size} favorites")
+                firebaseRepo.getFavorites()
+                    .onSuccess { favorites ->
+                        _favoriteIds.value = favorites.mapNotNull { it.id }.toSet()
+                        Log.d(TAG, "Loaded ${favorites.size} favorites")
+                    }
+                    .onFailure { e ->
+                        Log.e(TAG, "Error loading favorites", e)
+                    }
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading favorites", e)
             }
@@ -159,20 +203,19 @@ class MapViewModel @Inject constructor(
     // Toggle favorite status for a parking spot
     fun toggleFavorite(spotId: String) {
         viewModelScope.launch {
-            try {
-                val userId = firebaseRepo.getCurrentUserId() ?: return@launch
-                firebaseRepo.toggleFavorite(userId, spotId)
-
-                // Update local state
-                _favoriteIds.value = if (spotId in _favoriteIds.value) {
-                    _favoriteIds.value - spotId
-                } else {
-                    _favoriteIds.value + spotId
+            toggleFavoriteUseCase(spotId)
+                .onSuccess {
+                    // Update local state
+                    _favoriteIds.value = if (spotId in _favoriteIds.value) {
+                        _favoriteIds.value - spotId
+                    } else {
+                        _favoriteIds.value + spotId
+                    }
+                    Log.d(TAG, "Toggled favorite for spot: $spotId")
                 }
-                Log.d(TAG, "Toggled favorite for spot: $spotId")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error toggling favorite", e)
-            }
+                .onFailure { e ->
+                    Log.e(TAG, "Error toggling favorite", e)
+                }
         }
     }
 

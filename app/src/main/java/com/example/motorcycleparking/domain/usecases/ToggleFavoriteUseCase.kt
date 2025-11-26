@@ -16,10 +16,7 @@ class ToggleFavoriteUseCase @Inject constructor(
 
     suspend operator fun invoke(spotId: String): Result<Unit> {
         return try {
-            val userId = firebaseRepo.getCurrentUserId()
-                ?: return Result.failure(Exception("User not logged in"))
-
-            firebaseRepo.toggleFavorite(userId, spotId)
+            firebaseRepo.toggleFavorite(spotId)
             _favoritesChanged.emit(Unit)    // Notifies that favorites has been updated
             Result.success(Unit)
         } catch (e: Exception) {
