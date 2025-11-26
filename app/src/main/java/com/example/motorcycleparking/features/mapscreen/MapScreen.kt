@@ -38,8 +38,6 @@ fun MapScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchResults by remember { mutableStateOf(mockNames) }
 
-
-
     val motorcycleIcon = rememberScaledMarker(
         resId = R.drawable.mc_parking_icon,
         sizePx = 96    // try 96 or 128, can tweak
@@ -51,23 +49,23 @@ fun MapScreen(
             mapViewModel = viewModel,
             settingsViewModel = settingsViewModel
         ){
-        uiState.spots.forEach { spot ->
-            Marker(
-                state = MarkerState(
-                    position = com.google.android.gms.maps.model.LatLng(
-                        spot.latitude ?: 0.0,
-                        spot.longitude ?: 0.0
-                    )
-                ),
-                title = spot.name,
-                icon = motorcycleIcon,
-                snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
-                onClick = { marker ->
-                    marker.showInfoWindow()
-                    true
-                }
-            )
-        }
+            uiState.spots.forEach { spot ->
+                Marker(
+                    state = MarkerState(
+                        position = com.google.android.gms.maps.model.LatLng(
+                            spot.latitude ?: 0.0,
+                            spot.longitude ?: 0.0
+                        )
+                    ),
+                    title = spot.name,
+                    icon = motorcycleIcon,
+                    snippet = "${spot.displayAddress}\n${if (spot.free ?: true ) "Free" else "Paid"}",
+                    onClick = { marker ->
+                        marker.showInfoWindow()
+                        true
+                    }
+                )
+            }
         }
 
         // --- Search Bar Composable ---
