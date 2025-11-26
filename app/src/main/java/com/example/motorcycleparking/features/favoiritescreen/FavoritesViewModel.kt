@@ -31,24 +31,27 @@ class FavoritesViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = FavoritesUiState.Loading
 
-            try {
-                val userId = firebaseRepo.getCurrentUserId()
-                    ?: throw Exception("User not logged in")
-                val favorites = firebaseRepo.getFavorites(userId)
-                _uiState.value = FavoritesUiState.Success(favorites)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to load favorites", e)
-                _uiState.value = FavoritesUiState.Error(message = e.message ?: "Failed to load favorites")
-            }
+            val result = firebaseRepo.getFavorites()
+
+            result.fold(
+                onSuccess = { favorites ->
+                    _uiState.value = FavoritesUiState.Success(favorites)
+                },
+                onFailure = { e ->
+                    Log.e(TAG, "Failed to load favorites", e)
+                    _uiState.value = FavoritesUiState.Error(
+                        message = e.message ?: "Failed to load favorites"
+                    )
+                }
+            )
         }
     }
+
 
     fun toggleFavorite(spotId: String) {
         viewModelScope.launch {
             try {
-                val userId = firebaseRepo.getCurrentUserId()
-                    ?: throw Exception("User not logged in")
-                firebaseRepo.toggleFavorite(userId, spotId)
+                firebaseRepo.toggleFavorite(spotId)
                 loadFavorites() // Refresh
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to toggle favorite: $spotId", e)

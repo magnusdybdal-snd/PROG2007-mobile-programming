@@ -3,8 +3,6 @@ package com.example.motorcycleparking.features.loginscreen
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.motorcycleparking.core.utils.encodeGeohash
-import com.example.motorcycleparking.core.utils.getNeighbors
 import com.example.motorcycleparking.data.api.FirebaseRepo
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,22 +32,11 @@ class LoginViewModel @Inject constructor(
 
             try {
                 val uid = firebaseRepo.signInWithEmailPassword(email, password)
-                firebaseRepo.toggleFavorite(uid, "Nm9NhSyRYP0ZpSOk15pU")
-                Log.d(TAG, "Successfully logged in as $uid")
                 _uiState.value = LoginUiState(
                     isSignedIn = true,
                     userId = uid
                 )
 
-                val lat = 37.7749   // San Francisco
-                val lon = -122.42
-                val precision = 7
-
-                val geoHash = encodeGeohash(lat, lon, precision)
-                println("Geohash: $geoHash")
-
-                val neighbors = getNeighbors(geoHash, includeCenter = true)
-                println("Neighbors (including center): $neighbors")
             } catch (e: Exception) {
                 Log.e(TAG, "Sign in failed", e)
                 _uiState.value = LoginUiState(
