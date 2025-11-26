@@ -9,6 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 @Composable
 fun FavoriteConfirmationDialog(
     parkingSpotName: String? = "this parking spot",
+    isFavorite: Boolean = false,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -16,18 +17,26 @@ fun FavoriteConfirmationDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Remove from Favorites?",
+                text = if (isFavorite) {
+                    "Remove from Favorites?"
+                } else {
+                    "Add to Favorites?"
+                },
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
             Text(
-                text = "Remove $parkingSpotName from your favorites?"
+                text = if (isFavorite) {
+                    "Remove $parkingSpotName from your favorites?"
+                } else {
+                    "Add $parkingSpotName to your favorites?"
+                }
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Remove")
+                Text(if (isFavorite) "Remove" else "Add")
             }
         },
         dismissButton = {

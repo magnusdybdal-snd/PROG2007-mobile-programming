@@ -74,6 +74,7 @@ fun ParkingSpotCard(
     if (showFavoriteDialog) {
         FavoriteConfirmationDialog(
             parkingSpotName = parkingSpot.name,
+            isFavorite = isFavorite,
             onConfirm = {
                 showFavoriteDialog = false
                 onFavoriteClick()
