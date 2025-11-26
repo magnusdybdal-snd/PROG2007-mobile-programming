@@ -31,15 +31,17 @@ class FavoritesViewModel @Inject constructor(
     }
 
     private fun observeFavoriteChanges() {
+        Log.d(TAG, "🔔 Started observing favorite changes")
         viewModelScope.launch {
             toggleFavoriteUseCase.favoritesChanged.collect {
-                Log.d(TAG, "Favorites changed - Reloading")
+                Log.d(TAG, "🔔 Favorites changed event received - Reloading")
                 loadFavorites()
             }
         }
     }
 
-    private fun loadFavorites() {
+    fun loadFavorites() {
+        Log.d(TAG, "📥 Loading favorites...")
         viewModelScope.launch {
             _uiState.value = FavoritesUiState.Loading
 
@@ -47,10 +49,11 @@ class FavoritesViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { favorites ->
+                    Log.d(TAG, "✅ Loaded ${favorites.size} favorites")
                     _uiState.value = FavoritesUiState.Success(favorites)
                 },
                 onFailure = { e ->
-                    Log.e(TAG, "Failed to load favorites", e)
+                    Log.e(TAG, "❌ Failed to load favorites", e)
                     _uiState.value = FavoritesUiState.Error(
                         message = e.message ?: "Failed to load favorites"
                     )
@@ -62,12 +65,14 @@ class FavoritesViewModel @Inject constructor(
 
     fun toggleFavorite(spotId: String) {
         viewModelScope.launch {
-            try {
-                firebaseRepo.toggleFavorite(spotId)
-                loadFavorites() // Refresh
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to toggle favorite: $spotId", e)
-            }
+            Log.d(TAG, "🔄 Toggling favorite: $spotId")
+            toggleFavoriteUseCase(spotId)
+                .onSuccess {
+                    Log.d(TAG, "✅ Toggle successful")
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "❌ Failed to toggle favorite: $spotId", e)
+                }
         }
     }
 }

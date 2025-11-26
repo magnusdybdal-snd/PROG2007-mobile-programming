@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
@@ -29,6 +30,11 @@ fun FavoriteScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+
+    // Refresh favorites when screen becomes visible
+    LaunchedEffect(Unit) {
+        viewModel.loadFavorites()
+    }
 
     // Mock data
     val mockFavorites = listOf(
@@ -96,6 +102,7 @@ fun FavoriteScreen(
                 favorites.forEach { spot ->
                     ParkingSpotCard(
                         parkingSpot = spot,
+                        isFavorite = true, // All spots on favorites screen are favorited
                         onFavoriteClick = {
                             spot.id?.let { viewModel.toggleFavorite(it) }
                         }
