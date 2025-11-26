@@ -49,7 +49,9 @@ class MapViewModel @Inject constructor(
         swLat: Double,
         swLng: Double,
         neLat: Double,
-        neLng: Double
+        neLng: Double,
+        zoom: Float,
+        center: LatLng
     ) {
         Log.d(TAG, "📍 Loading spots for visible bounds")
         Log.d(TAG, "   SW: ($swLat, $swLng)")
@@ -62,7 +64,9 @@ class MapViewModel @Inject constructor(
                 swLat = swLat,
                 swLng = swLng,
                 neLat = neLat,
-                neLng = neLng
+                neLng = neLng,
+                zoom = zoom,
+                center = center
             )
                 .onSuccess { parkingSpots ->
                     Log.d(TAG, "✅ Found ${parkingSpots.size} spots in visible area")
@@ -97,9 +101,15 @@ class MapViewModel @Inject constructor(
             try {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     if (location != null) {
-                        val userLatLng = LatLng(location.latitude, location.longitude)
+                        val userLatLng = com.google.android.gms.maps.model.LatLng(
+                            location.latitude,
+                            location.longitude
+                        )
                         _userLocation.value = userLatLng
-                        Log.d(TAG, "📍 User location found: (${location.latitude}, ${location.longitude})")
+                        Log.d(
+                            TAG,
+                            "📍 User location found: (${location.latitude}, ${location.longitude})"
+                        )
 
                         // Don't load spots here - let the map camera do it when it's ready
                     } else {
@@ -139,7 +149,10 @@ class MapViewModel @Inject constructor(
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    val newLocation = LatLng(location.latitude, location.longitude)
+                    val newLocation = com.google.android.gms.maps.model.LatLng(
+                        location.latitude,
+                        location.longitude
+                    )
                     Log.d(TAG, "📍 Location update: (${location.latitude}, ${location.longitude})")
                     _userLocation.value = newLocation
                 }

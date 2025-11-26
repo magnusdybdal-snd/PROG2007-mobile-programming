@@ -1,6 +1,7 @@
 package com.example.motorcycleparking.domain.repositories
 
 import com.example.motorcycleparking.domain.models.ParkingSpot
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
 
 interface ParkingSpotRepository {
@@ -13,6 +14,8 @@ interface ParkingSpotRepository {
         swLat: Double,
         swLng: Double,
         neLat: Double,
-        neLng: Double
+        neLng: Double,
+        zoom: Float,
+        position: LatLng
     ): Result<List<ParkingSpot>>
 }

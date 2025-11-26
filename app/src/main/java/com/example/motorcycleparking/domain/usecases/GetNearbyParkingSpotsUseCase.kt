@@ -2,6 +2,7 @@ package com.example.motorcycleparking.domain.usecases
 
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.example.motorcycleparking.domain.repositories.ParkingSpotRepository
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.GeoPoint
 import javax.inject.Inject
 
@@ -19,13 +20,17 @@ class GetNearbyParkingSpotsUseCase @Inject constructor(
         swLat: Double,
         swLng: Double,
         neLat: Double,
-        neLng: Double
+        neLng: Double,
+        zoom: Float,
+        center: LatLng
     ): Result<List<ParkingSpot>> {
         return repository.getParkingSpotsInBounds(
             swLat = swLat,
             swLng = swLng,
             neLat = neLat,
-            neLng = neLng
+            neLng = neLng,
+            zoom = zoom,
+            position = center
         )
     }
 }

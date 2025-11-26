@@ -4,13 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import androidx.core.net.toUri
 import com.google.firebase.firestore.GeoPoint
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
-import androidx.core.net.toUri
 
 
 const val BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
@@ -193,11 +193,11 @@ object GeoUtils {
      */
     fun zoomLevelToPrecision(zoom: Float): Int {
         return when {
-            zoom < 6f -> 3   // Very zoomed out - city level
-            zoom < 9f -> 4   // Zoomed out - district level
-            zoom < 12f -> 5  // Medium zoom - neighborhood level
-            zoom < 15f -> 6  // Zoomed in - street level
-            zoom < 18f -> 7  // Very zoomed in - building level
+            zoom < 10f -> 3   // Very zoomed out - city level
+            zoom < 13f -> 4   // Zoomed out - district level
+            zoom < 16f -> 5  // Medium zoom - neighborhood level
+            zoom < 19f -> 6  // Zoomed in - street level
+            zoom < 22f -> 7  // Very zoomed in - building level
             else -> 8        // Maximum zoom - precise location
         }
     }

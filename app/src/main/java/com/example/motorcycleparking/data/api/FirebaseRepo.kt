@@ -1,6 +1,7 @@
 package com.example.motorcycleparking.data.api
 
 import android.util.Log
+import com.example.motorcycleparking.core.utils.GeoUtils
 import com.example.motorcycleparking.core.utils.encodeGeohash
 import com.example.motorcycleparking.core.utils.getNeighbors
 import com.example.motorcycleparking.data.api.dto.FavoritesDto
@@ -10,6 +11,7 @@ import com.example.motorcycleparking.data.api.dto.SearchDto
 import com.example.motorcycleparking.data.api.dto.toDomain
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -317,45 +319,55 @@ class FirebaseRepo @Inject constructor(
         swLat: Double,
         swLng: Double,
         neLat: Double,
-        neLng: Double
-    ): Result<List<ParkingSpot>> {
+        neLng: Double,
+        zoom: Float,
+        center: LatLng
+    ): Result<List<ParkingSpotDto>> {
         Log.d("FirebaseRepo", "📡 Getting all spots in bounds")
         Log.d("FirebaseRepo", "   SW: ($swLat, $swLng)")
         Log.d("FirebaseRepo", "   NE: ($neLat, $neLng)")
 
         return try {
-            val allDocs = db.collection("parkingspots")
-                .get()
-                .await()
 
-            Log.d("FirebaseRepo", "📦 Found ${allDocs.size()} total spots in database")
+            val STORAGE_PRECISION = 7
+
+
+            val rawSearchPrecision = GeoUtils.zoomLevelToPrecision(zoom)
+
+            // CRITICAL: Never search with precision higher than storage precision
+            val searchPrecision = minOf(rawSearchPrecision, STORAGE_PRECISION)
+
+            val centerHash = encodeGeohash(center.latitude, center.longitude, searchPrecision)
+            val searchHashes = getNeighbors(centerHash, includeCenter = true)
+
+            Log.d("SearchHashes", searchHashes.toString())
 
             val spotsInBounds = mutableListOf<ParkingSpotDto>()
 
-            for (doc in allDocs) {
-                val point = doc.getGeoPoint("geo_point") ?: continue
+            for (hash in searchHashes) {
+                try {
+                    val snapshot = db.collection("parkingspots")
+                        .orderBy("geo_hash")
+                        .startAt(hash)
+                        .endAt(hash + "\uf8ff") // This finds all hashes starting with 'hash'
+                        .get()
+                        .await()
 
-                // Check if spot is within bounds
-                if (point.latitude >= swLat &&
-                    point.latitude <= neLat &&
-                    point.longitude >= swLng &&
-                    point.longitude <= neLng
-                ) {
+                    val spots = snapshot.documents.mapNotNull {
+                        it.toObject(ParkingSpotDto::class.java)
+                    }
 
-                    val dto = ParkingSpotDto(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "",
-                        note = doc.getString("note") ?: "",
-                        displayAddress = doc.getString("display_address") ?: "",
-                        geoPoint = point,
-                    )
-                    spotsInBounds.add(dto)
-                    Log.d("FirebaseRepo", "   ✅ ${dto.name} is in bounds")
+                    Log.d("GeoSearch", "Hash $hash found ${spots.size} spots")
+                    spotsInBounds.addAll(spots)
+
+                } catch (e: Exception) {
+                    Log.e("GeoSearch", "Error fetching hash $hash", e)
                 }
             }
 
-            Log.d("FirebaseRepo", "✅ ${spotsInBounds.size} spots within visible area")
-            Result.success(spotsInBounds.toDomain())
+            Log.d("GeoSearch", "Total spots before filtering: ${spotsInBounds.size}")
+
+            return Result.success(spotsInBounds)
 
         } catch (e: Exception) {
             Log.e("FirebaseRepo", "❌ Error: ${e.message}", e)

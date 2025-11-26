@@ -87,6 +87,7 @@ fun GoogleMapView(
                     mapViewModel.startLocationUpdates(context, fusedLocationClient)
                 }
             }
+
             else -> {
                 // Request the location permission if it has not been granted
                 permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -141,7 +142,9 @@ fun GoogleMapView(
                     swLat = bounds.southwest.latitude,
                     swLng = bounds.southwest.longitude,
                     neLat = bounds.northeast.latitude,
-                    neLng = bounds.northeast.longitude
+                    neLng = bounds.northeast.longitude,
+                    zoom = cameraPositionState.position.zoom,
+                    center = cameraPositionState.position.target
                 )
             }
         }
