@@ -130,8 +130,9 @@ fun MapScreen(
             ) {
                 ParkingSpotCard(
                     parkingSpot = spot,
+                    isFavorite = viewModel.isFavorite(spot.id ?: ""),
                     onFavoriteClick = {
-                        // TODO: Implement favorite functionality
+                        viewModel.toggleFavorite(spot.id ?: "")
                     },
                     modifier = Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },
