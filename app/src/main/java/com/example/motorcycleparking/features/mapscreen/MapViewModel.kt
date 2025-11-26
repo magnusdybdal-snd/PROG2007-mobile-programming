@@ -223,4 +223,35 @@ class MapViewModel @Inject constructor(
     fun isFavorite(spotId: String): Boolean {
         return spotId in _favoriteIds.value
     }
+
+    // Add a new parking spot
+    fun addParkingSpot(
+        name: String,
+        note: String,
+        address: String,
+        latitude: Double,
+        longitude: Double,
+        isFree: Boolean,
+        onSuccess: () -> Unit = {},
+        onFailure: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            firebaseRepo.addParkingSpot(
+                name = name,
+                note = note,
+                displayAddress = address,
+                latitude = latitude,
+                longitude = longitude,
+                isFree = isFree
+            )
+                .onSuccess { spotId ->
+                    Log.d(TAG, "Successfully added parking spot with ID: $spotId")
+                    onSuccess()
+                }
+                .onFailure { exception ->
+                    Log.e(TAG, "Failed to add parking spot: ${exception.message}", exception)
+                    onFailure(exception.message ?: "Failed to add parking spot")
+                }
+        }
+    }
 }

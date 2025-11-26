@@ -1,5 +1,6 @@
 package com.example.motorcycleparking.features.mapscreen
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -20,10 +21,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.motorcycleparking.R
+import com.example.motorcycleparking.core.core_ui.composable.AddParkingSpotBottomSheet
 import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.ParkingSpotCard
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
@@ -44,11 +47,16 @@ fun MapScreen(
     viewModel: MapViewModel = hiltViewModel(),
     settingsViewModel: SettingsViewModel
 ) {
+    val context = LocalContext.current
     val textFieldState = remember { TextFieldState() }
     val uiState by viewModel.uiState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     var searchResults by remember { mutableStateOf(mockNames) }
     var selectedSpot by remember { mutableStateOf<com.example.motorcycleparking.domain.models.ParkingSpot?>(null) }
+
+    // State for add parking spot bottom sheet
+    var showAddSpotSheet by remember { mutableStateOf(false) }
+    var addSpotLocation by remember { mutableStateOf<LatLng?>(null) }
 
     val cameraPositionState = rememberCameraPositionState()
     val coroutineScope = rememberCoroutineScope()
@@ -63,7 +71,11 @@ fun MapScreen(
         GoogleMapView(
             mapViewModel = viewModel,
             settingsViewModel = settingsViewModel,
-            cameraPositionState = cameraPositionState
+            cameraPositionState = cameraPositionState,
+            onMapLongClick = { latLng ->
+                addSpotLocation = latLng
+                showAddSpotSheet = true
+            }
         ){
         uiState.spots.forEach { spot ->
             val markerPosition = LatLng(
@@ -151,6 +163,46 @@ fun MapScreen(
                     )
                 }
             }
+        }
+
+        // --- Add Parking Spot Bottom Sheet ---
+        if (showAddSpotSheet && addSpotLocation != null) {
+            AddParkingSpotBottomSheet(
+                onDismiss = {
+                    showAddSpotSheet = false
+                    addSpotLocation = null
+                },
+                onSave = { name, note, address, isFree ->
+                    addSpotLocation?.let { location ->
+                        viewModel.addParkingSpot(
+                            name = name,
+                            note = note,
+                            address = address,
+                            latitude = location.latitude,
+                            longitude = location.longitude,
+                            isFree = isFree,
+                            onSuccess = {
+                                Toast.makeText(
+                                    context,
+                                    "Parking spot added successfully!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                showAddSpotSheet = false
+                                addSpotLocation = null
+                            },
+                            onFailure = { error ->
+                                Toast.makeText(
+                                    context,
+                                    "Failed to add spot: $error",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        )
+                    }
+                },
+                latitude = addSpotLocation!!.latitude,
+                longitude = addSpotLocation!!.longitude
+            )
         }
     }
 }
