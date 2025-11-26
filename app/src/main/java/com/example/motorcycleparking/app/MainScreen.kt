@@ -83,7 +83,7 @@ fun MainScreen(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.MAP,
+            startDestination = Routes.LOGIN,
             modifier = modifier.padding(innerPadding)
         ) {
             composable(Routes.MAP)        { MapScreen(
