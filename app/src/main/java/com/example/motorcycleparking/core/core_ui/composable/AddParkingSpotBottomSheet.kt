@@ -59,7 +59,7 @@ fun AddParkingSpotBottomSheet(
             Text(
                 text = "Add Parking Spot",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = cs.onPrimary
             )
 
             Text(
