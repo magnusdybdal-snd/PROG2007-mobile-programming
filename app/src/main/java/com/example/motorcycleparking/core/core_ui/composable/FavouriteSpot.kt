@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.runtime.getValue
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,6 +38,7 @@ import com.example.motorcycleparking.domain.models.ParkingSpot
 fun ParkingSpotCard(
     modifier: Modifier = Modifier,
     parkingSpot: ParkingSpot,
+    isFavorite: Boolean = false,
     onFavoriteClick: () -> Unit = {},
     cs: ColorScheme = MaterialTheme.colorScheme
 ) {
@@ -143,9 +145,17 @@ fun ParkingSpotCard(
                 }
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = "Favorite",
-                    tint = cs.primary
+                    imageVector = if (isFavorite) {
+                        Icons.Filled.Favorite
+                    } else {
+                        Icons.Outlined.FavoriteBorder
+                    },
+                    contentDescription = if (isFavorite) {
+                        "Remove from favorites"
+                    } else {
+                        "Add to favorites"
+                    },
+                    tint = if (isFavorite) cs.primary else cs.onSurfaceVariant
                 )
             }
         }
