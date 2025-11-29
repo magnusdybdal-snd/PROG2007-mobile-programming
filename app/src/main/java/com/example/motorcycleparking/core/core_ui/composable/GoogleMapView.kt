@@ -48,6 +48,7 @@ fun GoogleMapView(
     settingsViewModel: SettingsViewModel,
     cameraPositionState: com.google.maps.android.compose.CameraPositionState = rememberCameraPositionState(),
     cs: ColorScheme = MaterialTheme.colorScheme,
+    onMapLongClick: (com.google.android.gms.maps.model.LatLng) -> Unit = {},
     content: @Composable () -> Unit  // Changed from 'function' to 'content' (better naming)
 ) {
     // Obtain the current context
@@ -196,7 +197,8 @@ fun GoogleMapView(
             ),
             uiSettings = MapUiSettings(
                 myLocationButtonEnabled = false,  // Using custom button instead
-            )
+            ),
+            onMapLongClick = onMapLongClick
         ) {
             // Render the markers passed from MapScreen
             content()

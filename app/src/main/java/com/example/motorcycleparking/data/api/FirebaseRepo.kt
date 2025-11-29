@@ -367,5 +367,40 @@ class FirebaseRepo @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun addParkingSpot(
+        name: String,
+        note: String,
+        displayAddress: String,
+        latitude: Double,
+        longitude: Double,
+        isFree: Boolean
+    ): Result<String> {
+        return try {
+            val geoHash = encodeGeohash(latitude, longitude, precision = 7)
+            val geoPoint = GeoPoint(latitude, longitude)
+
+            val parkingSpotData = hashMapOf(
+                "name" to name,
+                "name_lowercase" to name.lowercase(),
+                "note" to note,
+                "display_address" to displayAddress,
+                "geo_point" to geoPoint,
+                "geo_hash" to geoHash,
+                "free" to isFree
+            )
+
+            val docRef = db.collection("parkingspots")
+                .add(parkingSpotData)
+                .await()
+
+            Timber.tag("FirebaseRepo").d("Successfully added parking spot with ID: ${docRef.id}")
+            Result.success(docRef.id)
+
+        } catch (e: Exception) {
+            Timber.tag("FirebaseRepo").e(e, "Failed to add parking spot")
+            Result.failure(e)
+        }
+    }
 }
 
