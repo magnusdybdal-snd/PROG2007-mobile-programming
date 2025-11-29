@@ -111,11 +111,33 @@ fun GoogleMapView(
         }
     }
 
-    // Update camera position when user location changes and auto-center is enabled
-    LaunchedEffect(userLocation, settingsState.autoCenterOnLocation) {
+    // Track if user has manually moved the camera
+    var hasUserMovedCamera by remember { mutableStateOf(false) }
+    var isAutoCentering by remember { mutableStateOf(false) }
+
+    // Monitor camera movements to detect manual user interactions
+    LaunchedEffect(cameraPositionState.isMoving) {
+        // If camera is moving and it's not due to auto-centering, user moved it manually
+        if (cameraPositionState.isMoving && !isAutoCentering) {
+            hasUserMovedCamera = true
+        }
+    }
+
+    // Reset manual movement flag when auto-center setting is toggled on
+    LaunchedEffect(settingsState.autoCenterOnLocation) {
         if (settingsState.autoCenterOnLocation) {
+            hasUserMovedCamera = false
+        }
+    }
+
+    // Update camera position when user location changes and auto-center is enabled
+    // But only if the user hasn't manually moved the camera
+    LaunchedEffect(userLocation, settingsState.autoCenterOnLocation) {
+        if (settingsState.autoCenterOnLocation && !hasUserMovedCamera) {
             userLocation?.let {
+                isAutoCentering = true
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(it, 15f)
+                isAutoCentering = false
             }
         }
     }
