@@ -87,30 +87,19 @@ object GeoUtils {
      */
     fun zoomLevelToPrecision(zoom: Float): Int {
         return when {
-            zoom < 10f -> 3   // Very zoomed out - city level
-            zoom < 13f -> 4   // Zoomed out - district level
-            zoom < 16f -> 5  // Medium zoom - neighborhood level
-            zoom < 19f -> 6  // Zoomed in - street level
-            zoom < 22f -> 7  // Very zoomed in - building level
-            else -> 8        // Maximum zoom - precise location
+            zoom < 3f -> 1   // as small as possible
+            zoom < 5f -> 2   // world/continent
+            zoom < 7f -> 3   // country
+            zoom < 9f -> 3   // large region
+            zoom < 11f -> 4  // region/state
+            zoom < 13f -> 4  // city area
+            zoom < 15f -> 5  // city/neighborhood
+            zoom < 17f -> 6  // neighborhood/street
+            zoom < 19f -> 7  // street/block
+            else -> 7        // max out at storage precision
         }
     }
 
-    /**
-     * Get approximate search radius in meters for a given precision
-     * Useful for debugging or showing to users
-     */
-    fun precisionToRadius(precision: Int): Double {
-        return when (precision) {
-            3 -> 78000.0    // ~78 km
-            4 -> 19500.0    // ~19.5 km
-            5 -> 2440.0     // ~2.4 km
-            6 -> 610.0      // ~610 m
-            7 -> 76.0       // ~76 m
-            8 -> 19.0       // ~19 m
-            else -> 610.0   // Default to precision 6
-        }
-    }
 
     fun getNeighbors(geoHash: String, includeCenter: Boolean = false): List<String> {
         if (geoHash.isEmpty()) return emptyList()

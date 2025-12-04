@@ -327,26 +327,16 @@ class FirebaseRepo @Inject constructor(
         zoom: Float,
         center: LatLng
     ): Result<List<ParkingSpotDto>> {
-        Log.d("FirebaseRepo", "📡 Getting all spots in bounds")
-        Log.d("FirebaseRepo", "   SW: ($swLat, $swLng)")
-        Log.d("FirebaseRepo", "   NE: ($neLat, $neLng)")
-
         return try {
 
-            val STORAGE_PRECISION = 7
-
-
-            val rawSearchPrecision = GeoUtils.zoomLevelToPrecision(zoom)
-
-            // CRITICAL: Never search with precision higher than storage precision
-            val searchPrecision = minOf(rawSearchPrecision, STORAGE_PRECISION)
+            val searchPrecision = GeoUtils.zoomLevelToPrecision(zoom)
 
             val centerHash = encodeGeohash(center.latitude, center.longitude, searchPrecision)
             val searchHashes = getNeighbors(centerHash, includeCenter = true)
 
             Log.d("SearchHashes", searchHashes.toString())
 
-            val spotsInBounds = mutableListOf<ParkingSpotDto>()
+            val spotMap = mutableListOf<ParkingSpotDto>()
 
             for (hash in searchHashes) {
                 try {
@@ -357,29 +347,18 @@ class FirebaseRepo @Inject constructor(
                         .get()
                         .await()
 
-                    val spots = snapshot.documents.mapNotNull { doc ->
-                        ParkingSpotDto(
-                            id = doc.id,
-                            name = doc.getString("name") ?: "",
-                            nameLowercase = doc.getString("name_lowercase") ?: "",
-                            note = doc.getString("note") ?: "",
-                            displayAddress = doc.getString("display_address") ?: "",
-                            geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
-                            free = doc.getBoolean("free") ?: false
-                        )
+                    val spots = snapshot.documents.mapNotNull {
+                        it.toObject(ParkingSpotDto::class.java)
                     }
 
-                    Log.d("GeoSearch", "Hash $hash found ${spots.size} spots")
-                    spotsInBounds.addAll(spots)
+                    spotMap.addAll(spots)
 
                 } catch (e: Exception) {
                     Log.e("GeoSearch", "Error fetching hash $hash", e)
                 }
             }
 
-            Log.d("GeoSearch", "Total spots before filtering: ${spotsInBounds.size}")
-
-            return Result.success(spotsInBounds)
+            return Result.success(spotMap)
 
         } catch (e: Exception) {
             Log.e("FirebaseRepo", "❌ Error: ${e.message}", e)
