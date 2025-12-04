@@ -2,8 +2,8 @@ package com.example.motorcycleparking.data.api
 
 import android.util.Log
 import com.example.motorcycleparking.core.utils.GeoUtils
-import com.example.motorcycleparking.core.utils.encodeGeohash
-import com.example.motorcycleparking.core.utils.getNeighbors
+import com.example.motorcycleparking.core.utils.GeoUtils.encodeGeohash
+import com.example.motorcycleparking.core.utils.GeoUtils.getNeighbors
 import com.example.motorcycleparking.data.api.dto.FavoritesDto
 import com.example.motorcycleparking.data.api.dto.HistoryDto
 import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
@@ -172,19 +172,19 @@ class FirebaseRepo @Inject constructor(
                     .get()
                     .await()
 
-                    docs.documents.mapNotNull { doc ->
-                        doc.getGeoPoint("geo_point")?.let { geo ->
-                            ParkingSpot(
-                                id = doc.id,
-                                name = doc.getString("name") ?: "",
-                                note = doc.getString("note") ?: "",
-                                displayAddress = doc.getString("display_address") ?: "",
-                                latitude = geo.latitude,
-                                longitude = geo.longitude,
-                                free = doc.getBoolean("free")
-                            )
-                        }
+                docs.documents.mapNotNull { doc ->
+                    doc.getGeoPoint("geo_point")?.let { geo ->
+                        ParkingSpot(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            note = doc.getString("note") ?: "",
+                            displayAddress = doc.getString("display_address") ?: "",
+                            latitude = geo.latitude,
+                            longitude = geo.longitude,
+                            free = doc.getBoolean("free")
+                        )
                     }
+                }
             }.distinctBy { it.id }
             Result.success(spots)
 
