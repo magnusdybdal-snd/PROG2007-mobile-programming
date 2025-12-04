@@ -101,6 +101,7 @@ class FirebaseRepo @Inject constructor(
                         note = doc.getString("note") ?: "",
                         displayAddress = doc.getString("display_address") ?: "",
                         geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                        free = doc.getBoolean("free") ?: false
                     )
                     dtoList.add(dto)
                     Log.d(
@@ -133,7 +134,7 @@ class FirebaseRepo @Inject constructor(
             db.runTransaction { transaction ->
                 val snapshot = transaction.get(userRef)
                 val user = snapshot.toObject<FavoritesDto>() ?: FavoritesDto()
-                val favorites = user.ids.toMutableList()
+                val favorites = user.favorites.toMutableList()
 
                 if (favorites.contains(spotId)) {
                     favorites.remove(spotId)
@@ -158,16 +159,20 @@ class FirebaseRepo @Inject constructor(
                 .get()
                 .await()
 
-            val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.ids.orEmpty()
-            if (favoriteIds.isEmpty()) return Result.success(emptyList())
+            val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.favorites.orEmpty()
+
+            if (favoriteIds.isEmpty()) {
+                return Result.success(emptyList())
+            }
 
             // Firestore allows 10 items per whereIn query
             val spots = favoriteIds.chunked(10).flatMap { chunk ->
-                db.collection("parkingspots")
+                val docs = db.collection("parkingspots")
                     .whereIn(FieldPath.documentId(), chunk)
                     .get()
                     .await()
-                    .documents.mapNotNull { doc ->
+
+                    docs.documents.mapNotNull { doc ->
                         doc.getGeoPoint("geo_point")?.let { geo ->
                             ParkingSpot(
                                 id = doc.id,
@@ -181,7 +186,6 @@ class FirebaseRepo @Inject constructor(
                         }
                     }
             }.distinctBy { it.id }
-
             Result.success(spots)
 
         } catch (e: Exception) {
@@ -371,6 +375,41 @@ class FirebaseRepo @Inject constructor(
 
         } catch (e: Exception) {
             Log.e("FirebaseRepo", "❌ Error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun addParkingSpot(
+        name: String,
+        note: String,
+        displayAddress: String,
+        latitude: Double,
+        longitude: Double,
+        isFree: Boolean
+    ): Result<String> {
+        return try {
+            val geoHash = encodeGeohash(latitude, longitude, precision = 7)
+            val geoPoint = GeoPoint(latitude, longitude)
+
+            val parkingSpotData = hashMapOf(
+                "name" to name,
+                "name_lowercase" to name.lowercase(),
+                "note" to note,
+                "display_address" to displayAddress,
+                "geo_point" to geoPoint,
+                "geo_hash" to geoHash,
+                "free" to isFree
+            )
+
+            val docRef = db.collection("parkingspots")
+                .add(parkingSpotData)
+                .await()
+
+            Timber.tag("FirebaseRepo").d("Successfully added parking spot with ID: ${docRef.id}")
+            Result.success(docRef.id)
+
+        } catch (e: Exception) {
+            Timber.tag("FirebaseRepo").e(e, "Failed to add parking spot")
             Result.failure(e)
         }
     }

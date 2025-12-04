@@ -30,10 +30,10 @@ import timber.log.Timber
 fun GoogleMapView(
     mapViewModel: MapViewModel,
     settingsViewModel: SettingsViewModel,
+    cameraPositionState: com.google.maps.android.compose.CameraPositionState = rememberCameraPositionState(),
+    onMapLongClick: (com.google.android.gms.maps.model.LatLng) -> Unit = {},
     content: @Composable () -> Unit  // Changed from 'function' to 'content' (better naming)
 ) {
-    // Initialize the camera position state
-    val cameraPositionState = rememberCameraPositionState()
     // Obtain the current context
     val context = LocalContext.current
     // Observe the user's location from the ViewModel
@@ -160,7 +160,8 @@ fun GoogleMapView(
         ),
         uiSettings = MapUiSettings(
             myLocationButtonEnabled = settingsState.showMyLocationButton,
-        )
+        ),
+        onMapLongClick = onMapLongClick
     ) {
         // Render the markers passed from MapScreen
         content()

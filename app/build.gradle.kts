@@ -84,6 +84,7 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.play.services.location)
+    implementation(libs.play.services.auth)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
