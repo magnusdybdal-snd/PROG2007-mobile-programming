@@ -357,8 +357,16 @@ class FirebaseRepo @Inject constructor(
                         .get()
                         .await()
 
-                    val spots = snapshot.documents.mapNotNull {
-                        it.toObject(ParkingSpotDto::class.java)
+                    val spots = snapshot.documents.mapNotNull { doc ->
+                        ParkingSpotDto(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            nameLowercase = doc.getString("name_lowercase") ?: "",
+                            note = doc.getString("note") ?: "",
+                            displayAddress = doc.getString("display_address") ?: "",
+                            geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                            free = doc.getBoolean("free") ?: false
+                        )
                     }
 
                     Log.d("GeoSearch", "Hash $hash found ${spots.size} spots")
