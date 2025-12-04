@@ -5,16 +5,11 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.core.net.toUri
-import com.google.firebase.firestore.GeoPoint
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
 
-
+// Base 32 encoding used to hash position
 const val BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
 
+// Map to get the neighbors of a geohash
 private val NEIGHBORS = mapOf(
     "even" to mapOf(
         "n" to "p0r21436x8zb9dcf5h7kjnmqesgutwvy",
@@ -30,6 +25,7 @@ private val NEIGHBORS = mapOf(
     )
 )
 
+// The borders of a geohash square
 private val BORDERS = mapOf(
     "even" to mapOf(
         "n" to "prxz",
@@ -100,7 +96,9 @@ object GeoUtils {
         }
     }
 
-
+    /**
+     * Get the neighbors of a given hash
+     */
     fun getNeighbors(geoHash: String, includeCenter: Boolean = false): List<String> {
         if (geoHash.isEmpty()) return emptyList()
 
@@ -124,6 +122,9 @@ object GeoUtils {
         return neighbors
     }
 
+    /**
+     * Calculate the adjacent border for a given geohash
+     */
     fun calculateAdjacent(geoHash: String, dir: String): String {
         if (geoHash.isEmpty()) return ""
 
@@ -145,25 +146,17 @@ object GeoUtils {
         return parent + BASE32[index]
     }
 
+    /**
+     * Calculate the diagonal point
+     */
     private fun calculateDiagonal(geoHash: String, dir1: String, dir2: String): String {
         val first = calculateAdjacent(geoHash, dir1)
         return calculateAdjacent(first, dir2)
     }
 
-    fun distanceInKm(point1: GeoPoint, point2: GeoPoint): Double {
-        val R = 6371.0 // Earth radius in km
-        val lat1 = point1.latitude.toRadians()
-        val lat2 = point2.latitude.toRadians()
-        val deltaLat = (point2.latitude - point1.latitude).toRadians()
-        val deltaLon = (point2.longitude - point1.longitude).toRadians()
-
-        val a = sin(deltaLat / 2).pow(2) + cos(lat1) * cos(lat2) * sin(deltaLon / 2).pow(2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
-    }
-
-    fun Double.toRadians() = this * Math.PI / 180
-
+    /**
+     * Encode a simple lat and lon point and generate a square with the point
+     */
     fun encodeGeohash(lat: Double, lon: Double, precision: Int = 12): String {
         var isEven = true
         var bit = 0
@@ -173,6 +166,7 @@ object GeoUtils {
         val latRange = doubleArrayOf(-90.0, 90.0)
         val lonRange = doubleArrayOf(-180.0, 180.0)
 
+        // Loop until the string is as long as precision
         while (geohash.length < precision) {
             val mid: Double
             if (isEven) {
@@ -193,6 +187,7 @@ object GeoUtils {
                 }
             }
 
+            // Swap the direction
             isEven = !isEven
 
             if (bit < 4) {
