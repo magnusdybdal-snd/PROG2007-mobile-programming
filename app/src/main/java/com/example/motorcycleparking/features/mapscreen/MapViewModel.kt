@@ -53,6 +53,37 @@ class MapViewModel @Inject constructor(
         Log.d(TAG, "MapViewModel initialized")
     }
 
+    // Load parking spots using geohash around center location
+    fun loadParkingSpots(center: LatLng, precision: Int = 6) {
+        Log.d(TAG, "Loading spots near (${center.latitude}, ${center.longitude}) with precision $precision")
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            val geoPoint = com.google.firebase.firestore.GeoPoint(center.latitude, center.longitude)
+
+            getNearbyParkingSpotsUseCase(geoPoint, precision)
+                .onSuccess { parkingSpots ->
+                    Log.d(TAG, "Found ${parkingSpots.size} spots nearby")
+                    parkingSpots.forEachIndexed { index, spot ->
+                        Log.d(TAG, "   ${index + 1}. ${spot.name}")
+                    }
+
+                    _uiState.value = MapUiState(
+                        isLoading = false,
+                        spots = parkingSpots
+                    )
+                }
+                .onFailure { exception ->
+                    Log.e(TAG, "Error: ${exception.message}", exception)
+                    _uiState.value = MapUiState(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Unknown error"
+                    )
+                }
+        }
+    }
+
     // Load parking spots based on camera position
     fun loadParkingSpotsInBounds(
         swLat: Double,
@@ -62,7 +93,7 @@ class MapViewModel @Inject constructor(
         zoom: Float,
         center: LatLng
     ) {
-        Log.d(TAG, "📍 Loading spots for visible bounds")
+        Log.d(TAG, "Loading spots for visible bounds")
         Log.d(TAG, "   SW: ($swLat, $swLng)")
         Log.d(TAG, "   NE: ($neLat, $neLng)")
 
@@ -78,9 +109,9 @@ class MapViewModel @Inject constructor(
                 center = center
             )
                 .onSuccess { parkingSpots ->
-                    Log.d(TAG, "✅ Found ${parkingSpots.size} spots in visible area")
+                    Log.d(TAG, "Found ${parkingSpots.size} spots in visible area")
                     parkingSpots.forEachIndexed { index, spot ->
-                        Log.d(TAG, "   📍 ${index + 1}. ${spot.name}")
+                        Log.d(TAG, "   ${index + 1}. ${spot.name}")
                     }
 
                     _uiState.value = MapUiState(
@@ -89,7 +120,7 @@ class MapViewModel @Inject constructor(
                     )
                 }
                 .onFailure { exception ->
-                    Log.e(TAG, "❌ Error: ${exception.message}", exception)
+                    Log.e(TAG, "Error: ${exception.message}", exception)
                     _uiState.value = MapUiState(
                         isLoading = false,
                         errorMessage = exception.message ?: "Unknown error"
@@ -99,14 +130,14 @@ class MapViewModel @Inject constructor(
     }
 
     fun fetchUserLocation(context: Context, fusedLocationClient: FusedLocationProviderClient) {
-        Log.d(TAG, "🔍 fetchUserLocation called")
+        Log.d(TAG, "fetchUserLocation called")
 
         if (ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d(TAG, "✅ Location permission granted")
+            Log.d(TAG, "Location permission granted")
             try {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     if (location != null) {
@@ -117,37 +148,37 @@ class MapViewModel @Inject constructor(
                         _userLocation.value = userLatLng
                         Log.d(
                             TAG,
-                            "📍 User location found: (${location.latitude}, ${location.longitude})"
+                            "User location found: (${location.latitude}, ${location.longitude})"
                         )
 
                         // Don't load spots here - let the map camera do it when it's ready
                     } else {
-                        Log.w(TAG, "⚠️ Location is null - GPS might not be ready yet")
+                        Log.w(TAG, "Location is null - GPS might not be ready yet")
                     }
                 }.addOnFailureListener { exception ->
-                    Log.e(TAG, "❌ Failed to get location: ${exception.message}", exception)
+                    Log.e(TAG, "Failed to get location: ${exception.message}", exception)
                 }
             } catch (e: SecurityException) {
-                Log.e(TAG, "❌ SecurityException: ${e.localizedMessage}", e)
+                Log.e(TAG, "SecurityException: ${e.localizedMessage}", e)
             }
         } else {
-            Log.e(TAG, "❌ Location permission NOT granted")
+            Log.e(TAG, "Location permission NOT granted")
         }
     }
 
     fun startLocationUpdates(context: Context, fusedLocationClient: FusedLocationProviderClient) {
-        Log.d(TAG, "🔄 startLocationUpdates called")
+        Log.d(TAG, "startLocationUpdates called")
 
         if (ContextCompat.checkSelfPermission(
                 context,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_DENIED
         ) {
-            Log.e(TAG, "❌ Cannot start location updates - permission denied")
+            Log.e(TAG, "Cannot start location updates - permission denied")
             return
         }
 
-        Log.d(TAG, "✅ Setting up location updates...")
+        Log.d(TAG, "Setting up location updates...")
 
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY, 10000L
@@ -162,7 +193,7 @@ class MapViewModel @Inject constructor(
                         location.latitude,
                         location.longitude
                     )
-                    Log.d(TAG, "📍 Location update: (${location.latitude}, ${location.longitude})")
+                    Log.d(TAG, "Location update: (${location.latitude}, ${location.longitude})")
                     _userLocation.value = newLocation
                 }
             }
@@ -174,24 +205,24 @@ class MapViewModel @Inject constructor(
                 locationCallback!!,
                 Looper.getMainLooper()
             )
-            Log.d(TAG, "✅ Location updates started successfully")
+            Log.d(TAG, "Location updates started successfully")
         } catch (e: SecurityException) {
-            Log.e(TAG, "❌ Error requesting location updates: ${e.localizedMessage}", e)
+            Log.e(TAG, "Error requesting location updates: ${e.localizedMessage}", e)
             Timber.e("Error requesting location updates: ${e.localizedMessage}")
         }
     }
 
     fun stopLocationUpdates(fusedLocationClient: FusedLocationProviderClient) {
-        Log.d(TAG, "⏹️ Stopping location updates")
+        Log.d(TAG, "Stopping location updates")
         locationCallback?.let {
             fusedLocationClient.removeLocationUpdates(it)
-            Log.d(TAG, "✅ Location updates stopped")
+            Log.d(TAG, "Location updates stopped")
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        Log.d(TAG, "🧹 MapViewModel cleared")
+        Log.d(TAG, "MapViewModel cleared")
         locationCallback = null
     }
 
