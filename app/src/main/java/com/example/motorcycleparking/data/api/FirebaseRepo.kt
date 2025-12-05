@@ -381,9 +381,18 @@ class FirebaseRepo @Inject constructor(
                         .get()
                         .await()
 
-                    results.addAll(
-                        snapshot.documents.mapNotNull { it.toObject(ParkingSpotDto::class.java) }
-                    )
+                    // Convert Firestore docs to DTOs manually to include id
+                    for (doc in snapshot.documents) {
+                        val dto = ParkingSpotDto(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            note = doc.getString("note") ?: "",
+                            displayAddress = doc.getString("display_address") ?: "",
+                            geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                            free = doc.getBoolean("free") ?: false
+                        )
+                        results.add(dto)
+                    }
 
                 } catch (e: Exception) {
                     Log.e("GeoSearch", "Error fetching hash $hash", e)
