@@ -4,14 +4,12 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -37,6 +35,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -59,6 +58,8 @@ fun GoogleMapView(
     // Observe the user's location from the ViewModel
     val userLocation by mapViewModel.userLocation
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    val cs = MaterialTheme.colorScheme
 
     // Observe settings state - using collectAsStateWithLifecycle
     val settingsState by settingsViewModel.settingsState.collectAsStateWithLifecycle()
@@ -192,7 +193,8 @@ fun GoogleMapView(
 
     // Create dark mode map style matching Google Maps dark theme
     val mapStyleOptions = if (isDarkMode) {
-        MapStyleOptions("""
+        MapStyleOptions(
+            """
             [
               {
                 "elementType": "geometry",
@@ -282,7 +284,8 @@ fun GoogleMapView(
                 "stylers": [{"color": "#17263c"}]
               }
             ]
-        """.trimIndent())
+        """.trimIndent()
+        )
     } else {
         null // Use default light map style
     }
