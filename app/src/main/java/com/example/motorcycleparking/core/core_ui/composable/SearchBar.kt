@@ -56,7 +56,8 @@ fun SimpleSearchBar(
                     },
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
-                    placeholder = { Text("Search") }
+                    placeholder = { Text("Search") },
+                    colors = AppSearchBar.inputColors()
                 )
 
             },

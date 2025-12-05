@@ -69,11 +69,11 @@ object AppNavBar {
     fun itemColors(): NavigationBarItemColors {
         val cs = MaterialTheme.colorScheme      // "cs" is short for "ColorScheme"
         return NavigationBarItemDefaults.colors(
-            selectedIconColor = cs.onSecondaryContainer,
-            selectedTextColor = cs.onSurfaceVariant,
-            indicatorColor = cs.background,
-            unselectedIconColor = cs.onSurfaceVariant,
-            unselectedTextColor = cs.onSurfaceVariant,
+            selectedIconColor = cs.surface,
+            selectedTextColor = cs.onSurface,
+            indicatorColor = cs.primary,
+            unselectedIconColor = cs.onSurface,
+            unselectedTextColor = cs.onSurface,
             disabledIconColor = cs.onSurface.copy(alpha = 0.38f),
             disabledTextColor = cs.onSurface.copy(alpha = 0.38f)
         )
@@ -81,26 +81,27 @@ object AppNavBar {
 }
 
 object AppSearchBar {
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun colors(): SearchBarColors {
-        val cs = MaterialTheme.colorScheme
-        SearchBarDefaults.inputFieldColors(
-            focusedTextColor = cs.onSurfaceVariant, // white
-            unfocusedTextColor = cs.onSurfaceVariant,
-            focusedLeadingIconColor = cs.onSecondaryContainer, // white
-            unfocusedLeadingIconColor = cs.onSecondaryContainer,
-            focusedTrailingIconColor = cs.onSecondaryContainer,
-            unfocusedTrailingIconColor = cs.onSecondaryContainer,
-            cursorColor = cs.tertiary,              // lightTeal
-            focusedPlaceholderColor = cs.outline,   // lightGrey
-            unfocusedPlaceholderColor = cs.onSurface.copy(alpha = 0.6f)
-        )
-        return SearchBarDefaults.colors(
-            containerColor = cs.surface,                 // teal
-            dividerColor = cs.outline                  // lightGrey
-        )
-    }
+    fun inputColors() = SearchBarDefaults.inputFieldColors(
+        focusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        focusedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        focusedTrailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        cursorColor = MaterialTheme.colorScheme.tertiary,
+        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface,   // ← BLACK
+        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface  // ← BLACK
+    )
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun colors() = SearchBarDefaults.colors(
+        containerColor = MaterialTheme.colorScheme.surface,
+        dividerColor = MaterialTheme.colorScheme.outline
+    )
 }
 
 object AppCard {
