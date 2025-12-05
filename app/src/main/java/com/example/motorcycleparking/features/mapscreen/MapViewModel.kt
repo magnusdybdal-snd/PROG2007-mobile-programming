@@ -265,14 +265,24 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             firebaseRepo.getSearchHistory()
                 .onSuccess { historyList ->
-                    _searchResults.value = historyList.map { historyDto ->
-                        SearchResultItem(
-                            id = historyDto.parkingId,
-                            displayText = historyDto.search,
-                            isHistory = true
-                        )
+                    // Fetch parking spot names for each history item
+                    val historyItems = historyList.mapNotNull { historyDto ->
+                        try {
+                            val result = firebaseRepo.getParkingById(historyDto.parkingId)
+                            result.getOrNull()?.let { parkingSpot ->
+                                SearchResultItem(
+                                    id = historyDto.parkingId,
+                                    displayText = parkingSpot.name ?: "Unknown Location",
+                                    isHistory = true
+                                )
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error fetching parking spot for history item", e)
+                            null
+                        }
                     }
-                    Log.d(TAG, "Loaded ${historyList.size} history items")
+                    _searchResults.value = historyItems
+                    Log.d(TAG, "Loaded ${historyItems.size} history items")
                 }
                 .onFailure { e ->
                     Log.e(TAG, "Error loading search history", e)
