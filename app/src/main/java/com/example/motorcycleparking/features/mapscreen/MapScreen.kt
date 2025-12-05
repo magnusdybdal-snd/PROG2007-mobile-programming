@@ -73,6 +73,7 @@ fun MapScreen(
             cameraPositionState = cameraPositionState,
             onMapLongClick = { latLng ->
                 addSpotLocation = latLng
+
                 showAddSpotSheet = true
             }
         ){
@@ -127,13 +128,13 @@ fun MapScreen(
                     viewModel.firebaseRepo.getParkingById(result.id)
                         .onSuccess { parkingSpot ->
                             selectedSpot = parkingSpot
-                            // Animate camera to the selected spot
+                            // Animate camera to the selected spot with zoom level
                             val spotLocation = LatLng(
                                 parkingSpot.latitude ?: 0.0,
                                 parkingSpot.longitude ?: 0.0
                             )
                             cameraPositionState.animate(
-                                update = CameraUpdateFactory.newLatLng(spotLocation),
+                                update = CameraUpdateFactory.newLatLngZoom(spotLocation, 16f),
                                 durationMs = 500
                             )
                         }

@@ -62,7 +62,6 @@ fun SimpleSearchBar(
 
     Box(
         modifier
-            .fillMaxSize()
             .semantics { isTraversalGroup = true }
     ) {
         SearchBar(
