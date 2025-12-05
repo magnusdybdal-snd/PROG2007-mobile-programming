@@ -29,7 +29,7 @@ class ParkingSpotRepositoryImpl @Inject constructor(
     ): Result<List<ParkingSpot>> {
         return try {
             val dtoResult =
-                firebaseRepo.getParkingSpotsInBounds(swLat, swLng, neLat, neLng, zoom, position)
+                firebaseRepo.getParkingSpotsInBounds(zoom, position)
 
             dtoResult.map { dtoList ->
                 dtoList.map { it.toDomain() }

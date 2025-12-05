@@ -82,19 +82,15 @@ object GeoUtils {
      * Higher zoom = more precision = more geohash characters
      */
     fun zoomLevelToPrecision(zoom: Float): Int {
+        Log.d("REE", zoom.toString())
         return when {
-            zoom < 3f -> 1   // as small as possible
-            zoom < 5f -> 2   // world/continent
-            zoom < 7f -> 3   // country
-            zoom < 9f -> 3   // large region
-            zoom < 11f -> 4  // region/state
-            zoom < 13f -> 4  // city area
-            zoom < 15f -> 5  // city/neighborhood
-            zoom < 17f -> 6  // neighborhood/street
-            zoom < 19f -> 7  // street/block
-            else -> 7        // max out at storage precision
+            zoom < 5f -> 1   // world
+            zoom < 8f -> 5   // continent
+            zoom < 12f -> 6  // city/region
+            else -> 7        // max precision: ~150 m
         }
     }
+
 
     /**
      * Get the neighbors of a given hash

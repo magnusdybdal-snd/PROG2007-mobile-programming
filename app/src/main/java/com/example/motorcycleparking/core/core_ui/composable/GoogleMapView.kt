@@ -133,7 +133,14 @@ fun GoogleMapView(
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val center = cameraPositionState.position.target
-            mapViewModel.loadParkingSpots(center = center)
+            mapViewModel.loadParkingSpotsInBounds(
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                16f,
+                center = center
+            )
         }
     }
 

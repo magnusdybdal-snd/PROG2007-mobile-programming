@@ -362,10 +362,6 @@ class FirebaseRepo @Inject constructor(
      * @param zoom Map zoom level → used to determine geohash precision.
      */
     suspend fun getParkingSpotsInBounds(
-        swLat: Double,
-        swLng: Double,
-        neLat: Double,
-        neLng: Double,
         zoom: Float,
         center: LatLng
     ): Result<List<ParkingSpotDto>> {
