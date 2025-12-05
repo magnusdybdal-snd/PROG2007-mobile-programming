@@ -16,25 +16,67 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = AppColor.teal,
-    onPrimary = AppColor.white,
-    secondary = AppColor.darkGrey,
-    onSecondary = AppColor.white,
-    tertiary = AppColor.fadedTeal,
-    onTertiary = AppColor.black,
-    background = AppColor.white,
-    onBackground = AppColor.black,
-    surface = AppColor.lightGrey,
-    onSurface = AppColor.black,
-    onSurfaceVariant = AppColor.darkGrey,
-    secondaryContainer = AppColor.lightTeal,
-    onSecondaryContainer = AppColor.black,
-    outline = AppColor.darkGrey
+private val LightColorScheme = androidx.compose.material3.lightColorScheme(
+    primary = AppColor.Light.primary,
+    onPrimary = AppColor.Light.onPrimary,
+    primaryContainer = AppColor.Light.primaryContainer,
+    onPrimaryContainer = AppColor.Light.onPrimaryContainer,
+    secondary = AppColor.Light.secondary,
+    onSecondary = AppColor.Light.onSecondary,
+    secondaryContainer = AppColor.Light.secondaryContainer,
+    onSecondaryContainer = AppColor.Light.onSecondaryContainer,
+    tertiary = AppColor.Light.tertiary,
+    onTertiary = AppColor.Light.onTertiary,
+    tertiaryContainer = AppColor.Light.tertiaryContainer,
+    onTertiaryContainer = AppColor.Light.onTertiaryContainer,
+    error = AppColor.Light.error,
+    onError = AppColor.Light.onError,
+    errorContainer = AppColor.Light.errorContainer,
+    onErrorContainer = AppColor.Light.onErrorContainer,
+    background = AppColor.Light.background,
+    onBackground = AppColor.Light.onBackground,
+    surface = AppColor.Light.surface,
+    onSurface = AppColor.Light.onSurface,
+    surfaceVariant = AppColor.Light.surfaceVariant,
+    onSurfaceVariant = AppColor.Light.onSurfaceVariant,
+    outline = AppColor.Light.outline,
+    outlineVariant = AppColor.Light.outlineVariant,
+    scrim = AppColor.Light.scrim,
+    inverseSurface = AppColor.Light.inverseSurface,
+    inverseOnSurface = AppColor.Light.inverseOnSurface,
+    inversePrimary = AppColor.Light.inversePrimary,
 )
 
-// Only one theme in app.
-private val LightColorScheme = DarkColorScheme
+private val DarkColorScheme = darkColorScheme(
+    primary = AppColor.Dark.primary,
+    onPrimary = AppColor.Dark.onPrimary,
+    primaryContainer = AppColor.Dark.primaryContainer,
+    onPrimaryContainer = AppColor.Dark.onPrimaryContainer,
+    secondary = AppColor.Dark.secondary,
+    onSecondary = AppColor.Dark.onSecondary,
+    secondaryContainer = AppColor.Dark.secondaryContainer,
+    onSecondaryContainer = AppColor.Dark.onSecondaryContainer,
+    tertiary = AppColor.Dark.tertiary,
+    onTertiary = AppColor.Dark.onTertiary,
+    tertiaryContainer = AppColor.Dark.tertiaryContainer,
+    onTertiaryContainer = AppColor.Dark.onTertiaryContainer,
+    error = AppColor.Dark.error,
+    onError = AppColor.Dark.onError,
+    errorContainer = AppColor.Dark.errorContainer,
+    onErrorContainer = AppColor.Dark.onErrorContainer,
+    background = AppColor.Dark.background,
+    onBackground = AppColor.Dark.onBackground,
+    surface = AppColor.Dark.surface,
+    onSurface = AppColor.Dark.onSurface,
+    surfaceVariant = AppColor.Dark.surfaceVariant,
+    onSurfaceVariant = AppColor.Dark.onSurfaceVariant,
+    outline = AppColor.Dark.outline,
+    outlineVariant = AppColor.Dark.outlineVariant,
+    scrim = AppColor.Dark.scrim,
+    inverseSurface = AppColor.Dark.inverseSurface,
+    inverseOnSurface = AppColor.Dark.inverseOnSurface,
+    inversePrimary = AppColor.Dark.inversePrimary,
+)
 
 @Composable
 fun MotorcycleParkingTheme(
@@ -69,11 +111,11 @@ object AppNavBar {
     fun itemColors(): NavigationBarItemColors {
         val cs = MaterialTheme.colorScheme      // "cs" is short for "ColorScheme"
         return NavigationBarItemDefaults.colors(
-            selectedIconColor = cs.onSecondaryContainer,
-            selectedTextColor = cs.onSurfaceVariant,
-            indicatorColor = cs.background,
-            unselectedIconColor = cs.onSurfaceVariant,
-            unselectedTextColor = cs.onSurfaceVariant,
+            selectedIconColor = cs.surface,
+            selectedTextColor = cs.onSurface,
+            indicatorColor = cs.primary,
+            unselectedIconColor = cs.onSurface,
+            unselectedTextColor = cs.onSurface,
             disabledIconColor = cs.onSurface.copy(alpha = 0.38f),
             disabledTextColor = cs.onSurface.copy(alpha = 0.38f)
         )
@@ -81,26 +123,27 @@ object AppNavBar {
 }
 
 object AppSearchBar {
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun colors(): SearchBarColors {
-        val cs = MaterialTheme.colorScheme
-        SearchBarDefaults.inputFieldColors(
-            focusedTextColor = cs.onSurfaceVariant, // white
-            unfocusedTextColor = cs.onSurfaceVariant,
-            focusedLeadingIconColor = cs.onSecondaryContainer, // white
-            unfocusedLeadingIconColor = cs.onSecondaryContainer,
-            focusedTrailingIconColor = cs.onSecondaryContainer,
-            unfocusedTrailingIconColor = cs.onSecondaryContainer,
-            cursorColor = cs.tertiary,              // lightTeal
-            focusedPlaceholderColor = cs.outline,   // lightGrey
-            unfocusedPlaceholderColor = cs.onSurface.copy(alpha = 0.6f)
-        )
-        return SearchBarDefaults.colors(
-            containerColor = cs.surface,                 // teal
-            dividerColor = cs.outline                  // lightGrey
-        )
-    }
+    fun inputColors() = SearchBarDefaults.inputFieldColors(
+        focusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        focusedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        focusedTrailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        cursorColor = MaterialTheme.colorScheme.tertiary,
+        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface,   // ← BLACK
+        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface  // ← BLACK
+    )
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun colors() = SearchBarDefaults.colors(
+        containerColor = MaterialTheme.colorScheme.surface,
+        dividerColor = MaterialTheme.colorScheme.outline
+    )
 }
 
 object AppCard {

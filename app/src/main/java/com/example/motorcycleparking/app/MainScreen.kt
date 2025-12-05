@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.motorcycleparking.core.core_navigation.NavItem
 import com.example.motorcycleparking.core.core_navigation.Routes
+import com.example.motorcycleparking.core.core_ui.AppNavBar
 import com.example.motorcycleparking.features.favoiritescreen.FavoriteScreen
 import com.example.motorcycleparking.features.loginscreen.LoginScreen
 import com.example.motorcycleparking.features.mapscreen.MapScreen
@@ -74,7 +75,8 @@ fun MainScreen(
                                 }
                             },
                             icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) }
+                            label = { Text(item.label) },
+                            colors = AppNavBar.itemColors()
                         )
                     }
                 }
@@ -91,7 +93,7 @@ fun MainScreen(
                 navController,
                 settingsViewModel =  settingsViewModel)
             }
-            composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController, cs = MaterialTheme.colorScheme ) }
+            composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController) }
             composable(Routes.SETTINGS)   { SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
