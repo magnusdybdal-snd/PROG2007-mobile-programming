@@ -4,21 +4,37 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.motorcycleparking.features.mapscreen.MapViewModel
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -27,6 +43,7 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
@@ -116,11 +133,33 @@ fun GoogleMapView(
         }
     }
 
-    // Update camera position when user location changes and auto-center is enabled
-    LaunchedEffect(userLocation, settingsState.autoCenterOnLocation) {
+    // Track if user has manually moved the camera
+    var hasUserMovedCamera by remember { mutableStateOf(false) }
+    var isAutoCentering by remember { mutableStateOf(false) }
+
+    // Monitor camera movements to detect manual user interactions
+    LaunchedEffect(cameraPositionState.isMoving) {
+        // If camera is moving and it's not due to auto-centering, user moved it manually
+        if (cameraPositionState.isMoving && !isAutoCentering) {
+            hasUserMovedCamera = true
+        }
+    }
+
+    // Reset manual movement flag when auto-center setting is toggled on
+    LaunchedEffect(settingsState.autoCenterOnLocation) {
         if (settingsState.autoCenterOnLocation) {
+            hasUserMovedCamera = false
+        }
+    }
+
+    // Update camera position when user location changes and auto-center is enabled
+    // But only if the user hasn't manually moved the camera
+    LaunchedEffect(userLocation, settingsState.autoCenterOnLocation) {
+        if (settingsState.autoCenterOnLocation && !hasUserMovedCamera) {
             userLocation?.let {
+                isAutoCentering = true
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(it, 15f)
+                isAutoCentering = false
             }
         }
     }
@@ -148,20 +187,161 @@ fun GoogleMapView(
         }
     }
 
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState,
-        properties = MapProperties(
-            mapType = MapType.NORMAL,
-            isTrafficEnabled = settingsState.showTraffic,
-            isMyLocationEnabled = hasLocationPermission // blue dot
-        ),
-        uiSettings = MapUiSettings(
-            myLocationButtonEnabled = settingsState.showMyLocationButton,
-        ),
-        onMapLongClick = onMapLongClick
-    ) {
-        // Render the markers passed from MapScreen
-        content()
+    // Detect if dark mode is active (either from system or from settings)
+    val isDarkMode = settingsState.darkMode || isSystemInDarkTheme()
+
+    // Create dark mode map style matching Google Maps dark theme
+    val mapStyleOptions = if (isDarkMode) {
+        MapStyleOptions("""
+            [
+              {
+                "elementType": "geometry",
+                "stylers": [{"color": "#242f3e"}]
+              },
+              {
+                "elementType": "labels.text.stroke",
+                "stylers": [{"color": "#242f3e"}]
+              },
+              {
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "administrative.locality",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "poi",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "poi.park",
+                "elementType": "geometry",
+                "stylers": [{"color": "#263c3f"}]
+              },
+              {
+                "featureType": "poi.park",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "road",
+                "elementType": "geometry",
+                "stylers": [{"color": "#5C748D"}]
+              },
+              {
+                "featureType": "road",
+                "elementType": "geometry.stroke",
+                "stylers": [{"color": "#4a5f75"}]
+              },
+              {
+                "featureType": "road",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "geometry",
+                "stylers": [{"color": "#6b83a0"}]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "geometry.stroke",
+                "stylers": [{"color": "#556b85"}]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "transit",
+                "elementType": "geometry",
+                "stylers": [{"color": "#2f3948"}]
+              },
+              {
+                "featureType": "transit.station",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "water",
+                "elementType": "geometry",
+                "stylers": [{"color": "#17263c"}]
+              },
+              {
+                "featureType": "water",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "water",
+                "elementType": "labels.text.stroke",
+                "stylers": [{"color": "#17263c"}]
+              }
+            ]
+        """.trimIndent())
+    } else {
+        null // Use default light map style
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(
+                mapType = MapType.NORMAL,
+                isTrafficEnabled = settingsState.showTraffic,
+                isMyLocationEnabled = hasLocationPermission, // blue dot
+                mapStyleOptions = mapStyleOptions
+            ),
+            uiSettings = MapUiSettings(
+                myLocationButtonEnabled = false,  // Using custom button instead
+            ),
+            onMapLongClick = onMapLongClick
+        ) {
+            // Render the markers passed from MapScreen
+            content()
+        }
+
+        // Custom "My Location" button
+        if (settingsState.showMyLocationButton && hasLocationPermission) {
+            val coroutineScope = rememberCoroutineScope()
+
+            FloatingActionButton(
+                onClick = {
+                    userLocation?.let { location ->
+                        // Reset the manual movement flag to re-enable auto-following
+                        hasUserMovedCamera = false
+
+                        // Animate camera to user location
+                        coroutineScope.launch {
+                            isAutoCentering = true
+                            cameraPositionState.animate(
+                                update = CameraUpdateFactory.newLatLngZoom(
+                                    location,
+                                    15f
+                                ),
+                                durationMs = 700
+                            )
+                            isAutoCentering = false
+                        }
+                    }
+                },
+                containerColor = if (isDarkMode) cs.surface else Color.White,
+                contentColor = if (isDarkMode) cs.onSurface else Color(0xFF161616),
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 10.dp, vertical = 34.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MyLocation,
+                    contentDescription = "My Location"
+                )
+            }
+        }
     }
 }
