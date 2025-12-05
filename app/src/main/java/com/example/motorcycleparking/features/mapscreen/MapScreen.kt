@@ -31,7 +31,6 @@ import com.example.motorcycleparking.core.core_ui.composable.GoogleMapView
 import com.example.motorcycleparking.core.core_ui.composable.ParkingSpotCard
 import com.example.motorcycleparking.core.core_ui.composable.SimpleSearchBar
 import com.example.motorcycleparking.core.core_ui.composable.rememberScaledMarker
-import com.example.motorcycleparking.domain.mockNames
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
@@ -51,7 +50,7 @@ fun MapScreen(
     val textFieldState = remember { TextFieldState() }
     val uiState by viewModel.uiState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
-    var searchResults by remember { mutableStateOf(mockNames) }
+    val searchResults by viewModel.searchResults.collectAsState()
     var selectedSpot by remember { mutableStateOf<com.example.motorcycleparking.domain.models.ParkingSpot?>(null) }
 
     // State for add parking spot bottom sheet
@@ -107,13 +106,46 @@ fun MapScreen(
         SimpleSearchBar(
             textFieldState = textFieldState,
             onSearch = { query ->
-                searchResults = if (query.isBlank()) {
-                    mockNames
-                } else {
-                    mockNames.filter { it.contains(query, ignoreCase = true) }
-                }
+                // Trigger search when user presses enter/search button
+                viewModel.searchParkingSpots(query)
             },
             searchResults = searchResults,
+            onExpanded = {
+                // Load search history when searchbar is expanded/tapped
+                viewModel.loadSearchHistory()
+            },
+            onQueryChange = { query ->
+                // Search as user types
+                viewModel.searchParkingSpots(query)
+            },
+            onResultClick = { result ->
+                // Handle click on search result
+                viewModel.onSearchResultClick(result, textFieldState.text.toString())
+
+                // Get the parking spot and show it on the map
+                coroutineScope.launch {
+                    viewModel.firebaseRepo.getParkingById(result.id)
+                        .onSuccess { parkingSpot ->
+                            selectedSpot = parkingSpot
+                            // Animate camera to the selected spot
+                            val spotLocation = LatLng(
+                                parkingSpot.latitude ?: 0.0,
+                                parkingSpot.longitude ?: 0.0
+                            )
+                            cameraPositionState.animate(
+                                update = CameraUpdateFactory.newLatLng(spotLocation),
+                                durationMs = 500
+                            )
+                        }
+                        .onFailure { e ->
+                            Toast.makeText(
+                                context,
+                                "Error loading parking spot: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                }
+            },
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
