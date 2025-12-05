@@ -58,37 +58,6 @@ class MapViewModel @Inject constructor(
         Log.d(TAG, "MapViewModel initialized")
     }
 
-    // Load parking spots using geohash around center location
-    fun loadParkingSpots(center: LatLng, precision: Int = 6) {
-        Log.d(TAG, "Loading spots near (${center.latitude}, ${center.longitude}) with precision $precision")
-
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-
-            val geoPoint = com.google.firebase.firestore.GeoPoint(center.latitude, center.longitude)
-
-            getNearbyParkingSpotsUseCase(geoPoint, precision)
-                .onSuccess { parkingSpots ->
-                    Log.d(TAG, "Found ${parkingSpots.size} spots nearby")
-                    parkingSpots.forEachIndexed { index, spot ->
-                        Log.d(TAG, "   ${index + 1}. ${spot.name}")
-                    }
-
-                    _uiState.value = MapUiState(
-                        isLoading = false,
-                        spots = parkingSpots
-                    )
-                }
-                .onFailure { exception ->
-                    Log.e(TAG, "Error: ${exception.message}", exception)
-                    _uiState.value = MapUiState(
-                        isLoading = false,
-                        errorMessage = exception.message ?: "Unknown error"
-                    )
-                }
-        }
-    }
-
     // Load parking spots based on camera position
     fun loadParkingSpotsInBounds(
         swLat: Double,

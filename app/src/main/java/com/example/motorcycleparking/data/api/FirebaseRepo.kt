@@ -8,7 +8,6 @@ import com.example.motorcycleparking.data.api.dto.FavoritesDto
 import com.example.motorcycleparking.data.api.dto.HistoryDto
 import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
 import com.example.motorcycleparking.data.api.dto.SearchDto
-import com.example.motorcycleparking.data.api.dto.toDomain
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.maps.model.LatLng
@@ -127,56 +126,6 @@ class FirebaseRepo @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.tag("UserInit").e(e, "Failed to initialize user document for $uid")
-        }
-    }
-
-    /**
-     * Returns nearby parking spots based on a geohash precision.
-     *
-     * Uses:
-     * - geohash neighbors (8 neighbors + center)
-     * - Firestore prefix match queries (startAt / endAt)
-     *
-     * @param geoPoint The user’s current location.
-     * @param precision Geohash precision (default 6 ≈ ~1.2km accuracy).
-     */
-    suspend fun getParkingspotsNearYou(
-        geoPoint: GeoPoint,
-        precision: Int = 6
-    ): Result<List<ParkingSpot>> {
-        return try {
-            val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
-            val dtoList = mutableListOf<ParkingSpotDto>()
-
-            // Query center + 8 surrounding geohashes
-            val geoHashNeighbors = getNeighbors(geoHash, true)
-
-            for (hash in geoHashNeighbors) {
-                val docs = db.collection("parkingspots")
-                    .orderBy("geo_hash")
-                    .startAt(hash)
-                    .endAt(hash + "\uf8ff")
-                    .get()
-                    .await()
-
-                // Convert Firestore docs to DTOs manually to include id
-                for (doc in docs) {
-                    val dto = ParkingSpotDto(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "",
-                        note = doc.getString("note") ?: "",
-                        displayAddress = doc.getString("display_address") ?: "",
-                        geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
-                        free = doc.getBoolean("free") ?: false
-                    )
-                    dtoList.add(dto)
-                }
-            }
-
-            Result.success(dtoList.toDomain())
-
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 

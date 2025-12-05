@@ -165,13 +165,6 @@ fun GoogleMapView(
         }
     }
 
-    // Load parking spots when user location is obtained (initial load)
-    LaunchedEffect(userLocation) {
-        userLocation?.let { location ->
-            mapViewModel.loadParkingSpots(center = location)
-        }
-    }
-
     // Load parking spots when camera stops moving (for panning/zooming)
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
