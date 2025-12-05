@@ -1,5 +1,6 @@
 package com.example.motorcycleparking.core.core_ui.composable
 
+import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +20,8 @@ import com.example.motorcycleparking.features.mapscreen.MapViewModel
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -30,8 +33,8 @@ import timber.log.Timber
 fun GoogleMapView(
     mapViewModel: MapViewModel,
     settingsViewModel: SettingsViewModel,
-    cameraPositionState: com.google.maps.android.compose.CameraPositionState = rememberCameraPositionState(),
-    onMapLongClick: (com.google.android.gms.maps.model.LatLng) -> Unit = {},
+    cameraPositionState: CameraPositionState = rememberCameraPositionState(),
+    onMapLongClick: (LatLng) -> Unit = {},
     content: @Composable () -> Unit  // Changed from 'function' to 'content' (better naming)
 ) {
     // Obtain the current context
@@ -66,7 +69,7 @@ fun GoogleMapView(
         mutableStateOf(
             ContextCompat.checkSelfPermission(
                 context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
@@ -77,7 +80,7 @@ fun GoogleMapView(
             // Check if the location permission is already granted
             ContextCompat.checkSelfPermission(
                 context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) -> {
                 // Fetch the user's location
                 mapViewModel.fetchUserLocation(context, fusedLocationClient)
@@ -90,7 +93,7 @@ fun GoogleMapView(
 
             else -> {
                 // Request the location permission if it has not been granted
-                permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
     }
@@ -133,12 +136,13 @@ fun GoogleMapView(
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val center = cameraPositionState.position.target
+            val zoom = cameraPositionState.position.zoom
             mapViewModel.loadParkingSpotsInBounds(
                 0.0,
                 0.0,
                 0.0,
                 0.0,
-                16f,
+                zoom,
                 center = center
             )
         }
