@@ -41,10 +41,8 @@ fun GoogleSignInButton(
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color(color = 0xFFFFA500),
-            contentColor = Color.Black,
-            disabledContainerColor = Color.White,
-            disabledContentColor = Color.Gray
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         modifier = modifier
             .fillMaxWidth()

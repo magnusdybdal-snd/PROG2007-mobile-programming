@@ -59,13 +59,13 @@ fun AddParkingSpotBottomSheet(
             Text(
                 text = "Add Parking Spot",
                 style = MaterialTheme.typography.headlineSmall,
-                color = cs.onPrimary
+                color = cs.onSurface
             )
 
             Text(
                 text = "Location: ${String.format("%.4f", latitude)}, ${String.format("%.4f", longitude)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = cs.onSurfaceVariant
             )
 
             OutlinedTextField(
@@ -73,11 +73,6 @@ fun AddParkingSpotBottomSheet(
                 onValueChange = { name = it },
                 label = { Text("Name *") },
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = cs.onPrimary,
-                    unfocusedTextColor = cs.onPrimary,
-                    cursorColor = cs.onPrimary
-                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -86,11 +81,6 @@ fun AddParkingSpotBottomSheet(
                 onValueChange = { address = it },
                 label = { Text("Address *") },
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = cs.onPrimary,
-                    unfocusedTextColor = cs.onPrimary,
-                    cursorColor = cs.onPrimary
-                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -100,11 +90,6 @@ fun AddParkingSpotBottomSheet(
                 label = { Text("Notes (optional)") },
                 minLines = 3,
                 maxLines = 5,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = cs.onPrimary,
-                    unfocusedTextColor = cs.onPrimary,
-                    cursorColor = cs.onPrimary
-                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -120,7 +105,7 @@ fun AddParkingSpotBottomSheet(
                     text = "Free parking",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(start = 8.dp),
-                    color = cs.onPrimary
+                    color = cs.onSurface
                 )
             }
 

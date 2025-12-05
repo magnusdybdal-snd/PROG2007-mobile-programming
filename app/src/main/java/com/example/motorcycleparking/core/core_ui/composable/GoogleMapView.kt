@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,6 +35,7 @@ import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -186,6 +188,106 @@ fun GoogleMapView(
         }
     }
 
+    // Detect if dark mode is active (either from system or from settings)
+    val isDarkMode = settingsState.darkMode || isSystemInDarkTheme()
+
+    // Create dark mode map style matching Google Maps dark theme
+    val mapStyleOptions = if (isDarkMode) {
+        MapStyleOptions("""
+            [
+              {
+                "elementType": "geometry",
+                "stylers": [{"color": "#242f3e"}]
+              },
+              {
+                "elementType": "labels.text.stroke",
+                "stylers": [{"color": "#242f3e"}]
+              },
+              {
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "administrative.locality",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "poi",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "poi.park",
+                "elementType": "geometry",
+                "stylers": [{"color": "#263c3f"}]
+              },
+              {
+                "featureType": "poi.park",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "road",
+                "elementType": "geometry",
+                "stylers": [{"color": "#5C748D"}]
+              },
+              {
+                "featureType": "road",
+                "elementType": "geometry.stroke",
+                "stylers": [{"color": "#4a5f75"}]
+              },
+              {
+                "featureType": "road",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "geometry",
+                "stylers": [{"color": "#6b83a0"}]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "geometry.stroke",
+                "stylers": [{"color": "#556b85"}]
+              },
+              {
+                "featureType": "road.highway",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "transit",
+                "elementType": "geometry",
+                "stylers": [{"color": "#2f3948"}]
+              },
+              {
+                "featureType": "transit.station",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "water",
+                "elementType": "geometry",
+                "stylers": [{"color": "#17263c"}]
+              },
+              {
+                "featureType": "water",
+                "elementType": "labels.text.fill",
+                "stylers": [{"color": "#d1d1d1"}]
+              },
+              {
+                "featureType": "water",
+                "elementType": "labels.text.stroke",
+                "stylers": [{"color": "#17263c"}]
+              }
+            ]
+        """.trimIndent())
+    } else {
+        null // Use default light map style
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -193,7 +295,8 @@ fun GoogleMapView(
             properties = MapProperties(
                 mapType = MapType.NORMAL,
                 isTrafficEnabled = settingsState.showTraffic,
-                isMyLocationEnabled = hasLocationPermission // blue dot
+                isMyLocationEnabled = hasLocationPermission, // blue dot
+                mapStyleOptions = mapStyleOptions
             ),
             uiSettings = MapUiSettings(
                 myLocationButtonEnabled = false,  // Using custom button instead
@@ -228,9 +331,9 @@ fun GoogleMapView(
                         }
                     }
                 },
-                containerColor = Color(0xFFFFFFFE),
-                contentColor = Color(0xFF636263),
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 1.dp),
+                containerColor = if (isDarkMode) cs.surface else Color.White,
+                contentColor = if (isDarkMode) cs.onSurface else Color(0xFF161616),
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(horizontal = 10.dp, vertical = 34.dp)

@@ -93,7 +93,7 @@ fun MainScreen(
                 navController,
                 settingsViewModel =  settingsViewModel)
             }
-            composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController, cs = MaterialTheme.colorScheme ) }
+            composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController) }
             composable(Routes.SETTINGS)   { SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
