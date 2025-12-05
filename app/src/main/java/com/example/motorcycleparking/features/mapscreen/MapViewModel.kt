@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.motorcycleparking.core.core_ui.composable.SearchResultItem
 import com.example.motorcycleparking.data.api.FirebaseRepo
 import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
 import com.example.motorcycleparking.domain.usecases.ToggleFavoriteUseCase
@@ -29,7 +30,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
-    private val firebaseRepo: FirebaseRepo,
+    val firebaseRepo: FirebaseRepo,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
@@ -47,6 +48,10 @@ class MapViewModel @Inject constructor(
     // Track favorite parking spot IDs
     private val _favoriteIds = MutableStateFlow<Set<String>>(emptySet())
     val favoriteIds: StateFlow<Set<String>> = _favoriteIds.asStateFlow()
+
+    // Track search results (history + live search)
+    private val _searchResults = MutableStateFlow<List<SearchResultItem>>(emptyList())
+    val searchResults: StateFlow<List<SearchResultItem>> = _searchResults.asStateFlow()
 
     init {
         loadFavorites()
@@ -296,6 +301,92 @@ class MapViewModel @Inject constructor(
                     Log.e(TAG, "Failed to add parking spot: ${exception.message}", exception)
                     onFailure(exception.message ?: "Failed to add parking spot")
                 }
+        }
+    }
+
+    // Load search history when searchbar is expanded
+    fun loadSearchHistory() {
+        viewModelScope.launch {
+            firebaseRepo.getSearchHistory()
+                .onSuccess { historyList ->
+                    // Fetch parking spot names for each history item
+                    val historyItems = historyList.mapNotNull { historyDto ->
+                        try {
+                            val result = firebaseRepo.getParkingById(historyDto.parkingId)
+                            result.getOrNull()?.let { parkingSpot ->
+                                SearchResultItem(
+                                    id = historyDto.parkingId,
+                                    displayText = parkingSpot.name ?: "Unknown Location",
+                                    isHistory = true
+                                )
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error fetching parking spot for history item", e)
+                            null
+                        }
+                    }
+                    _searchResults.value = historyItems
+                    Log.d(TAG, "Loaded ${historyItems.size} history items")
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "Error loading search history", e)
+                    _searchResults.value = emptyList()
+                }
+        }
+    }
+
+    // Search for parking spots as user types
+    fun searchParkingSpots(query: String) {
+        if (query.isBlank()) {
+            // Show history when query is empty
+            loadSearchHistory()
+            return
+        }
+
+        viewModelScope.launch {
+            firebaseRepo.getTitlesInSearch(query)
+                .onSuccess { searchDtoList ->
+                    _searchResults.value = searchDtoList.map { searchDto ->
+                        SearchResultItem(
+                            id = searchDto.spotId,
+                            displayText = searchDto.name,
+                            isHistory = false
+                        )
+                    }
+                    Log.d(TAG, "Found ${searchDtoList.size} search results for '$query'")
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "Error searching parking spots", e)
+                    _searchResults.value = emptyList()
+                }
+        }
+    }
+
+    // Handle when user clicks on a search result
+    fun onSearchResultClick(result: SearchResultItem, searchQuery: String) {
+        viewModelScope.launch {
+            try {
+                // Save to search history if it's not already a history item
+                if (!result.isHistory) {
+                    firebaseRepo.addToSearchHistory(
+                        spotId = result.id,
+                        searched = searchQuery.ifBlank { result.displayText }
+                    )
+                    Log.d(TAG, "Added '${result.displayText}' to search history")
+                }
+
+                // Get the parking spot details
+                firebaseRepo.getParkingById(result.id)
+                    .onSuccess { parkingSpot ->
+                        Log.d(TAG, "Found parking spot: ${parkingSpot.name}")
+                        // The UI will handle showing the spot on the map
+                    }
+                    .onFailure { e ->
+                        Log.e(TAG, "Error getting parking spot by ID", e)
+                    }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error handling search result click", e)
+            }
         }
     }
 }

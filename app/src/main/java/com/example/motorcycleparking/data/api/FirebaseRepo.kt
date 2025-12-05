@@ -52,11 +52,16 @@ class FirebaseRepo @Inject constructor(
      */
     suspend fun signInWithGoogle(account: GoogleSignInAccount): String {
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-        return auth.signInWithCredential(credential)
+        val uid = auth.signInWithCredential(credential)
             .await()
             .user
             ?.uid
             ?: throw Exception("Google sign-in failed")
+
+        // Initialize user document if it doesn't exist
+        initializeUserDocument(uid)
+
+        return uid
     }
 
     /**
@@ -103,6 +108,26 @@ class FirebaseRepo @Inject constructor(
     /** Signs out the currently authenticated user. */
     fun signOut() {
         auth.signOut()
+    }
+
+
+    private suspend fun initializeUserDocument(uid: String) {
+        try {
+            val userRef = db.collection("users").document(uid)
+            val snapshot = userRef.get().await()
+
+            if (!snapshot.exists()) {
+                val userData = hashMapOf(
+                    "favorites" to emptyList<String>()
+                )
+                userRef.set(userData).await()
+                Timber.tag("UserInit").d("Created user document for Google Sign-In user: $uid")
+            } else {
+                Timber.tag("UserInit").d("User document already exists for: $uid")
+            }
+        } catch (e: Exception) {
+            Timber.tag("UserInit").e(e, "Failed to initialize user document for $uid")
+        }
     }
 
     /**
