@@ -3,7 +3,22 @@ package com.example.motorcycleparking.domain.repositories
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.maps.model.LatLng
 
+/**
+ * Repository for managing parking spots
+ */
 interface ParkingSpotRepository {
+
+    /**
+     * Retrieves all parking spots in bounds
+     *
+     * @param swLat
+     * @param swLng
+     * @param neLat
+     * @param neLng
+     * @param zoom
+     * @param position
+     * @return Result with list of parking spots, or an exception
+     */
     suspend fun getParkingSpotsInBounds(
         swLat: Double,
         swLng: Double,
@@ -22,6 +37,7 @@ interface ParkingSpotRepository {
      * @param latitude Coordinate latitude
      * @param longitude Coordinate longitude
      * @param isFree Whether the parking is free or paid
+     * @return Result with docId of parking spot
      */
     suspend fun addParkingSpot(
         name: String,
