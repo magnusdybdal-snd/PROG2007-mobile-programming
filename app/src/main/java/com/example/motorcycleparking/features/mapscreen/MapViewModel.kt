@@ -32,7 +32,7 @@ import javax.inject.Inject
 class MapViewModel @Inject constructor(
     private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
     private val getFavoritesUseCase: GetFavoritesUseCase,
-    private val firebaseRepo: FirebaseRepo,
+    val firebaseRepo: FirebaseRepo,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
