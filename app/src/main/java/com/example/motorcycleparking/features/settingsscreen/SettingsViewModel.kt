@@ -107,7 +107,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** Signs out current user via Firebase authentication. */
+    /** Signs out current user. */
     fun signOut(){
         firebaseRepo.signOut()
     }
