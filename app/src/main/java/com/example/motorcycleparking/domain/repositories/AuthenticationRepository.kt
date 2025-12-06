@@ -22,7 +22,7 @@ interface AuthenticationRepository {
      * @param password - Users password
      * @return - Result with the users unique ID on success or exception on failure
      */
-    suspend fun signInWIthEmailPassword(email: String, password: String): Result<String>
+    suspend fun signInWithEmailPassword(email: String, password: String): Result<String>
 
     /**
      * Create a new user account with username and password
