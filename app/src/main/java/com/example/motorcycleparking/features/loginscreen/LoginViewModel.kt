@@ -15,6 +15,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Manages authentication state and operations for the login screen.
+ * Checks for existing session on initialization.
+ */
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
@@ -30,8 +34,7 @@ class LoginViewModel @Inject constructor(
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     init {
-        // Check if user is already signed in
-        checkAuthState()
+        checkAuthState() // Check if user is already signed in
     }
 
     private fun checkAuthState() {
@@ -47,6 +50,11 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Authenticates user via Google Sign-In using OAuth credentials.
+     *
+     * @param account Google account obtained from sign-in flow
+     */
     fun signInWithGoogle(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _uiState.value = LoginUiState(
@@ -69,6 +77,12 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Authenticates user with email and password credentials.
+     *
+     * @param email User's email address
+     * @param password User's password
+     */
     fun signInWithEmailPassword(email: String, password: String) {
         viewModelScope.launch {
             _uiState.value = LoginUiState(
@@ -91,6 +105,9 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Clears error message from state after toast has been displayed.
+     */
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }

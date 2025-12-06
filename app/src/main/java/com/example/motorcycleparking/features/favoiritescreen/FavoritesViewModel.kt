@@ -13,6 +13,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Manages favorites state with automatic reloading on favorite changes.
+ *
+ * @property getFavoritesUseCase Use case for getting favorite parking spots
+ * @property toggleFavoriteUseCase Use case for toggling favorites and emitting change events
+ */
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
     private val getFavoritesUseCase: GetFavoritesUseCase,
@@ -31,6 +37,9 @@ class FavoritesViewModel @Inject constructor(
         observeFavoriteChanges()
     }
 
+    /**
+     * Observes favorite change events and triggers reload to keep UI synchronized.
+     */
     private fun observeFavoriteChanges() {
         viewModelScope.launch {
             toggleFavoriteUseCase.favoritesChanged.collect {
@@ -39,6 +48,9 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Fetches current user's favorites and updates UI state accordingly.
+     */
     fun loadFavorites() {
         viewModelScope.launch {
             _uiState.value = FavoritesUiState.Loading
@@ -47,7 +59,6 @@ class FavoritesViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { favorites ->
-                    Log.d(TAG, "Loaded ${favorites.size} favorites")
                     _uiState.value = FavoritesUiState.Success(favorites)
                 },
                 onFailure = { e ->
@@ -61,6 +72,12 @@ class FavoritesViewModel @Inject constructor(
     }
 
 
+    /**
+     * Toggles favorite status for the given parking spot.
+     * Automatic UI reload is handled by observeFavoriteChanges().
+     *
+     * @param spotId Parking spot ID to toggle favorite status for
+     */
     fun toggleFavorite(spotId: String) {
         viewModelScope.launch {
             toggleFavoriteUseCase(spotId)

@@ -11,6 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Manages user registration state and authentication flow.
+ *
+ * @param firebaseRepo Repository for Firebase authentication operations
+ */
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val registerUserUseCase: RegisterUserUseCase
@@ -21,8 +26,19 @@ class RegisterViewModel @Inject constructor(
     }
 
     private val _uiState = MutableStateFlow(RegisterUiState())
+
+    /**
+     * Exposes current registration state including loading status, user ID, and errors.
+     */
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
+    /**
+     * Creates a new user account with Firebase authentication.
+     * Updates UI state with loading status, success (user ID), or error message.
+     *
+     * @param email User's email address for authentication
+     * @param password User's password for authentication
+     */
     fun createUser(email: String, password: String) {
         viewModelScope.launch {
             _uiState.value = RegisterUiState(
@@ -43,6 +59,9 @@ class RegisterViewModel @Inject constructor(
                 }
         }
     }
+    /**
+     * Clears the error message from UI state after it has been displayed to the user.
+     */
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }

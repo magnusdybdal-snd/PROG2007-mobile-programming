@@ -30,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.motorcycleparking.domain.models.ParkingSpot
@@ -183,28 +182,5 @@ fun ParkingSpotInfoPopup(
                 }
             }
         }
-    }
-}
-
-// Preview with sample data
-@Preview(showBackground = true)
-@Composable
-fun ParkingSpotInfoPopupPreview() {
-    MaterialTheme {
-        ParkingSpotInfoPopup(
-            parkingSpot = ParkingSpot(
-                name = "Downtown Parking",
-                id = "preview1",
-                displayAddress = "123 Main Street, City Center",
-                latitude = 59.9139,
-                longitude = 10.7522,
-                free = false,
-                note = "Located near the shopping center. Available 24/7. Limited spaces during weekdays."
-            ),
-            isFavorite = false,
-            onDismiss = {},
-            onToggleFavorite = {},
-            onNavigate = {}
-        )
     }
 }

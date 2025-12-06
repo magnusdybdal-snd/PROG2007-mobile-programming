@@ -45,6 +45,18 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/**
+ * Google Maps composable with location tracking, permissions, and settings integration.a
+ *
+ * Handles ACCESS_FINE_LOCATION permission requests, manages continuous location updates,
+ * auto-centers camera on user location, and loads parking spots when camera stops moving.
+ *
+ * @param mapViewModel Manages map state, location tracking, and parking spot loading; coordinates between map UI and data layer
+ * @param settingsViewModel Provides user preferences that control map behavior (auto-center, traffic, dark mode, continuous updates)
+ * @param cameraPositionState Controls map camera position; state is monitored to detect manual user movements and trigger parking spot loading
+ * @param onMapLongClick Invoked when user long-clicks the map; receives the tapped LatLng coordinates for custom handling
+ * @param content Composable lambda for rendering markers and overlays on the map; invoked within GoogleMap scope
+ */
 @Composable
 fun GoogleMapView(
     mapViewModel: MapViewModel,
@@ -138,7 +150,8 @@ fun GoogleMapView(
     var hasUserMovedCamera by remember { mutableStateOf(false) }
     var isAutoCentering by remember { mutableStateOf(false) }
 
-    // Monitor camera movements to detect manual user interactions
+    // Critical: Must distinguish between programmatic (auto-center) and user-initiated camera movements
+    // to prevent auto-centering from interfering with user exploration
     LaunchedEffect(cameraPositionState.isMoving) {
         // If camera is moving and it's not due to auto-centering, user moved it manually
         if (cameraPositionState.isMoving && !isAutoCentering) {
@@ -154,7 +167,8 @@ fun GoogleMapView(
     }
 
     // Update camera position when user location changes and auto-center is enabled
-    // But only if the user hasn't manually moved the camera
+    // ..but only if the user hasn't manually moved the camera
+    // Note: Uses direct position assignment (not animate) for instant tracking during continuous updates
     LaunchedEffect(userLocation, settingsState.autoCenterOnLocation) {
         if (settingsState.autoCenterOnLocation && !hasUserMovedCamera) {
             userLocation?.let {
@@ -310,9 +324,10 @@ fun GoogleMapView(
                 onClick = {
                     userLocation?.let { location ->
                         // Reset the manual movement flag to re-enable auto-following
+                        // This allows user to resume tracking after manually exploring the map
                         hasUserMovedCamera = false
 
-                        // Animate camera to user location
+                        // Animate camera to user location (uses animation unlike auto-center for UX feedback)
                         coroutineScope.launch {
                             isAutoCentering = true
                             cameraPositionState.animate(

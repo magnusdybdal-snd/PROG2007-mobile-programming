@@ -2,8 +2,13 @@ package com.example.motorcycleparking.core.core_ui
 
 import androidx.compose.ui.graphics.Color
 
+/**
+ * Application color palette for light and dark themes.
+ */
 object AppColor {
-    // Light Theme Colors
+    /**
+     * Color definitions for light theme using IBM Blue as primary brand color.
+     */
     object Light {
         // Primary - IBM Blue (main brand color)
         val primary = Color(0xFF0F62FE)           // color-blue-600
@@ -46,7 +51,9 @@ object AppColor {
         val inversePrimary = Color(0xFF78A9FF)    // color-blue-400
     }
 
-    // Dark Theme Colors
+    /**
+     * Color definitions for dark theme using IBM Blue as primary brand color.
+     */
     object Dark {
         // Primary - IBM Blue (main brand color)
         val primary = Color(0xFF78A9FF)           // color-blue-400

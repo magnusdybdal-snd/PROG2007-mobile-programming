@@ -11,8 +11,21 @@ import com.google.android.gms.maps.MapsInitializer
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 
+/**
+ * Main entry point activity for the Motorcycle Parking application.
+ *
+ * Initializes the Compose UI with navigation, theme, Firebase Firestore, and Google Maps.
+ * Serves as the host for [MainScreen] which manages the bottom navigation and screen routing.
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    /**
+     * Initializes the activity with edge-to-edge display, Firebase Firestore logging,
+     * Google Maps, and sets up the Compose content with navigation and theming.
+     *
+     * @param savedInstanceState Bundle containing the activity's previously saved state, or null.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

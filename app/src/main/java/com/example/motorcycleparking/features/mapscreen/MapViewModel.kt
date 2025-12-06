@@ -28,6 +28,10 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Manages map state, location tracking, parking spot operations, search, and favorites.
+ * Fetches spots based on visible map bounds using geohash-based queries for performance.
+ */
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
@@ -60,7 +64,17 @@ class MapViewModel @Inject constructor(
         Log.d(TAG, "MapViewModel initialized")
     }
 
-    // Load parking spots based on camera position
+    /**
+     * Loads parking spots within the visible map bounds using geohash-based queries.
+     * Adjusts query precision based on zoom level to balance performance and coverage.
+     *
+     * @param swLat Southwest corner latitude
+     * @param swLng Southwest corner longitude
+     * @param neLat Northeast corner latitude
+     * @param neLng Northeast corner longitude
+     * @param zoom Current map zoom level, determines query precision
+     * @param center Map center coordinates for geohash calculation
+     */
     fun loadParkingSpotsInBounds(
         swLat: Double,
         swLng: Double,
@@ -105,6 +119,12 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Fetches user's last known location once without starting continuous updates.
+     *
+     * @param context Required for permission checks
+     * @param fusedLocationClient Google Play Services location client
+     */
     fun fetchUserLocation(context: Context, fusedLocationClient: FusedLocationProviderClient) {
         Log.d(TAG, "fetchUserLocation called")
 
@@ -142,6 +162,13 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Starts continuous location updates with 10-second intervals.
+     * Updates are posted to userLocation StateFlow for UI reactivity.
+     *
+     * @param context Required for permission checks
+     * @param fusedLocationClient Google Play Services location client
+     */
     fun startLocationUpdates(context: Context, fusedLocationClient: FusedLocationProviderClient) {
         Log.d(TAG, "startLocationUpdates called")
 
@@ -157,7 +184,7 @@ class MapViewModel @Inject constructor(
         Log.d(TAG, "Setting up location updates...")
 
         val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY, 10000L
+            Priority.PRIORITY_HIGH_ACCURACY, 10000L // 10000L = 10 seconds
         ).apply {
             setMinUpdateIntervalMillis(5000L)
         }.build()
@@ -165,7 +192,7 @@ class MapViewModel @Inject constructor(
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    val newLocation = com.google.android.gms.maps.model.LatLng(
+                    val newLocation = LatLng(
                         location.latitude,
                         location.longitude
                     )
@@ -188,6 +215,11 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Stops continuous location updates to conserve battery.
+     *
+     * @param fusedLocationClient Google Play Services location client
+     */
     fun stopLocationUpdates(fusedLocationClient: FusedLocationProviderClient) {
         Log.d(TAG, "Stopping location updates")
         locationCallback?.let {
@@ -216,7 +248,11 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // Toggle favorite status for a parking spot
+    /**
+     * Toggles favorite status for a parking spot, adding or removing it from user's favorites.
+     *
+     * @param spotId Unique identifier of the parking spot to toggle
+     */
     fun toggleFavorite(spotId: String) {
         viewModelScope.launch {
             toggleFavoriteUseCase(spotId)
@@ -235,12 +271,18 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // Check if a parking spot is favorited
-    fun isFavorite(spotId: String): Boolean {
-        return spotId in _favoriteIds.value
-    }
-
-    // Add a new parking spot
+    /**
+     * Adds a new user-contributed parking spot to the database.
+     *
+     * @param name Display name for the parking spot
+     * @param note Additional user notes or description
+     * @param address Human-readable address
+     * @param latitude Coordinate latitude
+     * @param longitude Coordinate longitude
+     * @param isFree Whether the parking is free or paid
+     * @param onSuccess Callback invoked when spot is successfully added
+     * @param onFailure Callback invoked on failure with error message
+     */
     fun addParkingSpot(
         name: String,
         note: String,
@@ -271,7 +313,10 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // Load search history when searchbar is expanded
+    /**
+     * Loads user's search history from Firebase to display in the search bar dropdown.
+     * Fetches parking spot names for each history item to display meaningful results.
+     */
     fun loadSearchHistory() {
         viewModelScope.launch {
             firebaseRepo.getSearchHistory()
@@ -302,7 +347,12 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // Search for parking spots as user types
+    /**
+     * Searches for parking spots matching the query or shows history if query is blank.
+     * Performs live search as user types for real-time results.
+     *
+     * @param query Search query string, blank shows search history
+     */
     fun searchParkingSpots(query: String) {
         if (query.isBlank()) {
             // Show history when query is empty
@@ -329,7 +379,12 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    // Handle when user clicks on a search result
+    /**
+     * Handles search result selection, saving non-history items to user's search history.
+     *
+     * @param result The selected search result item
+     * @param searchQuery Original query used for searching, saved with history entry
+     */
     fun onSearchResultClick(result: SearchResultItem, searchQuery: String) {
         viewModelScope.launch {
             try {

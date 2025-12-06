@@ -6,19 +6,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.motorcycleparking.core.core_ui.composable.PageHeading
 import com.example.motorcycleparking.core.core_ui.composable.ParkingSpotCard
-import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.example.workoutapp.core.core_ui.composable.LoadingStateView
 
 /**
- * Displays users favorite parkignspots.
+ * Displays user's favorite parking spots.
+ *
+ * @param modifier Applied to the root Column in Success and Error states
+ * @param navController Navigation controller for potential navigation actions
+ * @param viewModel Provides favorites state and handles favorite toggling
  */
 @Composable
 fun FavoriteScreen(
@@ -53,7 +56,6 @@ fun FavoriteScreen(
                     modifier = Modifier,
                     text = "Favorites"
                 )
-
                 Text(
                     text = "Error: $message",
                     modifier = Modifier.padding(16.dp)
@@ -69,7 +71,6 @@ fun FavoriteScreen(
                     modifier = Modifier,
                     text = "Favorites"
                 )
-
                 favorites.forEach { spot ->
                     ParkingSpotCard(
                         parkingSpot = spot,

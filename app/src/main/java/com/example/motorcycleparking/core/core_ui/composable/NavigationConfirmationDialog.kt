@@ -7,6 +7,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 
+/**
+ * Confirmation dialog for initiating navigation to a parking spot.
+ *
+ * @param parkingSpotName Name displayed in the confirmation message
+ * @param onConfirm Invoked when user confirms navigation
+ * @param onDismiss Invoked when user cancels or dismisses the dialog
+ */
 @Composable
 fun NavigationConfirmationDialog(
     parkingSpotName: String? = "this parking spot",

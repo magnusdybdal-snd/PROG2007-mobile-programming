@@ -14,7 +14,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// Data class for all settings
+/**
+ * Represents the complete application settings state.
+ *
+ * @property showTraffic Enables real-time traffic overlay on map
+ * @property showMyLocationButton Displays button to recenter map on user location
+ * @property autoCenterOnLocation Automatically centers map when user location updates
+ * @property continuousLocationUpdates Enables persistent location tracking instead of one-time fetch
+ * @property showFavoritesOnly Filters parking spots to display only user-saved favorites
+ * @property darkMode Enables app-wide dark theme
+ */
 data class SettingsState(
     // Map Settings
     val showTraffic: Boolean = true,
@@ -31,6 +40,12 @@ data class SettingsState(
     val darkMode: Boolean = false,
 )
 
+/**
+ * Manages application settings with persistent storage and Firebase authentication.
+ *
+ * @param context Application context for accessing SettingsRepository
+ * @param firebaseRepo Handles user sign-out operations
+ */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -52,12 +67,14 @@ class SettingsViewModel @Inject constructor(
         )
 
     // Map Settings
+    /** Updates traffic overlay visibility and persists to repository. */
     fun updateShowTraffic(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateShowTraffic(enabled)
         }
     }
 
+    /** Updates my location button visibility and persists to repository. */
     fun updateMyLocationButton(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateMyLocationButton(enabled)
@@ -65,12 +82,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     // Location Settings
+    /** Updates auto-center behavior and persists to repository. */
     fun updateAutoCenterOnLocation(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateAutoCenterOnLocation(enabled)
         }
     }
 
+    /** Updates continuous location tracking mode and persists to repository. */
     fun updateContinuousLocationUpdates(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateContinuousLocationUpdates(enabled)
@@ -78,6 +97,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     // Parking Settings
+    /** Updates favorites filter and persists to repository. */
     fun updateShowFavoritesOnly(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateShowFavoritesOnly(enabled)
@@ -85,12 +105,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     // General Settings
+    /** Updates theme preference and persists to repository. */
     fun updateDarkMode(enabled: Boolean) {
         viewModelScope.launch {
             repository.updateDarkMode(enabled)
         }
     }
 
+    /** Signs out current user. */
     fun signOut(){
         viewModelScope.launch {
             signOutUseCase()
