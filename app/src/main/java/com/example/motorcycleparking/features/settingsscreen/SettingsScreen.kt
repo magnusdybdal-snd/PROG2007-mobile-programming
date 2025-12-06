@@ -35,6 +35,13 @@ import com.example.motorcycleparking.core.core_ui.composable.settings.SettingsSe
 import com.example.motorcycleparking.data.api.FirebaseRepo
 import timber.log.Timber
 
+/**
+ * Main settings screen with categorized toggles for app configuration.
+ *
+ * @param onNavigateBack Callback for upward navigation
+ * @param onNavigateToLogin Invoked after sign-out to redirect user to authentication
+ * @param viewModel Manages settings state and persistence
+ */
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,

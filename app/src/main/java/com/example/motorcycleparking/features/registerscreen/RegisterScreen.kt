@@ -25,14 +25,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.workoutapp.core.core_ui.composable.LoadingStateView
 
 
+/**
+ * User registration screen with email/password authentication.
+ * Automatically navigates back to login on successful registration.
+ *
+ * @param modifier Modifier for layout customization
+ * @param navController Required for navigation back to login screen on success or cancellation
+ * @param viewModel Manages registration state and user creation logic
+ */
 @Composable
 fun RegisterScreen(
     modifier: Modifier = Modifier,
@@ -125,20 +131,5 @@ fun RegisterScreen(
                 }
             }
         }
-    }
-}
-
-
-// --- Preview ---
-@Preview(showBackground = true)
-@Composable
-fun PreviewRegisterScreen() {
-    val navController = rememberNavController()
-
-    MaterialTheme {
-        RegisterScreen(
-            modifier = Modifier.fillMaxSize(),
-            navController = navController
-        )
     }
 }

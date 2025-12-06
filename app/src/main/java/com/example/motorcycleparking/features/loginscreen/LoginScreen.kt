@@ -28,11 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.motorcycleparking.R
 import com.example.motorcycleparking.core.core_navigation.Routes
 import com.example.motorcycleparking.core.core_ui.composable.GoogleSignInButton
@@ -41,6 +39,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 
+/**
+ * Displays authentication form supporting email/password and Google sign-in.
+ * Navigates to map screen on successful authentication, clearing back stack.
+ *
+ * @param modifier Modifier for styling and layout
+ * @param navController Required for navigation to map and register screens
+ * @param viewModel Manages authentication state and operations
+ */
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
@@ -167,19 +173,5 @@ fun LoginScreen(
                 }
             }
         }
-    }
-}
-
-// --- Preview ---
-@Preview(showBackground = true)
-@Composable
-fun PreviewLoginScreen() {
-    val navController = rememberNavController()
-
-    MaterialTheme {
-        LoginScreen(
-            modifier = Modifier.fillMaxSize(),
-            navController = navController
-        )
     }
 }
