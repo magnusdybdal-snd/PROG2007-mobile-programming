@@ -1,4 +1,4 @@
-package com.example.motorcycleparking.domain.usecases
+package com.example.motorcycleparking.domain.usecases.parkingspots
 
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.example.motorcycleparking.domain.repositories.ParkingSpotRepository

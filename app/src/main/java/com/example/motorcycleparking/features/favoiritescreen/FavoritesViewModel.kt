@@ -3,7 +3,6 @@ package com.example.motorcycleparking.features.favoiritescreen
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.motorcycleparking.data.api.FirebaseRepo
 import com.example.motorcycleparking.domain.usecases.favorites.GetFavoritesUseCase
 import com.example.motorcycleparking.domain.usecases.favorites.ToggleFavoriteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel

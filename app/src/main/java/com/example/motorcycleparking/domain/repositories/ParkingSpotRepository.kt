@@ -12,4 +12,13 @@ interface ParkingSpotRepository {
         zoom: Float,
         position: LatLng
     ): Result<List<ParkingSpot>>
+
+    suspend fun addParkingSpot(
+        name: String,
+        note: String,
+        displayAddress: String,
+        latitude: Double,
+        longitude: Double,
+        isFree: Boolean
+    ): Result<Unit>
 }

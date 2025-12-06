@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.motorcycleparking.core.core_ui.composable.SearchResultItem
 import com.example.motorcycleparking.data.api.FirebaseRepo
-import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.parkingspots.GetNearbyParkingSpotsUseCase
 import com.example.motorcycleparking.domain.usecases.favorites.GetFavoritesUseCase
 import com.example.motorcycleparking.domain.usecases.favorites.ToggleFavoriteUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
