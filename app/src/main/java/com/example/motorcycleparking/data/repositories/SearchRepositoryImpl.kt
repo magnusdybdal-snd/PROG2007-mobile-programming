@@ -1,7 +1,6 @@
 package com.example.motorcycleparking.data.repositories
 
 import com.example.motorcycleparking.data.api.FirebaseRepo
-import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.example.motorcycleparking.domain.repositories.SearchRepository
 import javax.inject.Inject
 
