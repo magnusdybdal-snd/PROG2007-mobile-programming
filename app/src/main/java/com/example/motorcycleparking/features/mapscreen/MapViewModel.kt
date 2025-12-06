@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.motorcycleparking.core.core_ui.composable.SearchResultItem
 import com.example.motorcycleparking.data.api.FirebaseRepo
 import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.favorites.GetFavoritesUseCase
 import com.example.motorcycleparking.domain.usecases.favorites.ToggleFavoriteUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -30,7 +31,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
-    val firebaseRepo: FirebaseRepo,
+    private val getFavoritesUseCase: GetFavoritesUseCase,
+    private val firebaseRepo: FirebaseRepo,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
@@ -203,18 +205,14 @@ class MapViewModel @Inject constructor(
     // Load user's favorite parking spots
     private fun loadFavorites() {
         viewModelScope.launch {
-            try {
-                firebaseRepo.getFavorites()
-                    .onSuccess { favorites ->
-                        _favoriteIds.value = favorites.mapNotNull { it.id }.toSet()
-                        Log.d(TAG, "Loaded ${favorites.size} favorites")
-                    }
-                    .onFailure { e ->
-                        Log.e(TAG, "Error loading favorites", e)
-                    }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading favorites", e)
-            }
+            getFavoritesUseCase()
+                .onSuccess { favorites ->
+                    _favoriteIds.value = favorites.mapNotNull { it.id }.toSet()
+                    Log.d(TAG, "Loaded ${favorites.size} favorites")
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "Error loading favorites", e)
+                }
         }
     }
 
