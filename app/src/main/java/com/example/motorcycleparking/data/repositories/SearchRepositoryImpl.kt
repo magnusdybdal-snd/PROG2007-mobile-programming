@@ -19,8 +19,4 @@ class SearchRepositoryImpl @Inject constructor(
     override suspend fun getTitlesinSearch(query: String): Result<Unit> {
         TODO("Not yet implemented")
     }
-
-    override suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
-        TODO("Not yet implemented")
-    }
 }

@@ -47,4 +47,6 @@ interface ParkingSpotRepository {
         longitude: Double,
         isFree: Boolean
     ): Result<String>
+
+    suspend fun getParkingSpotById()
 }

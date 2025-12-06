@@ -12,6 +12,4 @@ interface SearchRepository {
     suspend fun getTitlesinSearch(query: String): Result<Unit>
 
     suspend fun addToSearchHistory(): Result<Unit>
-
-    suspend fun getParkingById(spotId: String): Result<ParkingSpot>
 }

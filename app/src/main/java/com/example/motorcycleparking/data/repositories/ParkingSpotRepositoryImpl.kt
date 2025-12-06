@@ -47,6 +47,10 @@ class ParkingSpotRepositoryImpl @Inject constructor(
             isFree = isFree
         )
     }
+
+    override suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
+        TODO("Not yet implemented")
+    }
 }
 
 fun ParkingSpotDto.toDomain(): ParkingSpot {
