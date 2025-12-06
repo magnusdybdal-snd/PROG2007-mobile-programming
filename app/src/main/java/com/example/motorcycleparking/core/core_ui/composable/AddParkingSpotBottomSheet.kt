@@ -14,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -28,6 +27,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+/**
+ * Modal bottom sheet for adding a new parking spot with form validation.
+ *
+ * Validation: Name and address are required fields. Save button is enabled only when
+ * both fields contain non-blank input. All text fields are trimmed before saving.
+ *
+ * Animation: Sheet hide animation is triggered before invoking callbacks for smooth UX.
+ *
+ * @param onDismiss Invoked when dismissed via cancel, outside tap, or after save
+ * @param onSave Invoked on valid save with trimmed values: name, note, address, isFree
+ * @param latitude Parking spot latitude (displayed as read-only, formatted to 4 decimals)
+ * @param longitude Parking spot longitude (displayed as read-only, formatted to 4 decimals)
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddParkingSpotBottomSheet(

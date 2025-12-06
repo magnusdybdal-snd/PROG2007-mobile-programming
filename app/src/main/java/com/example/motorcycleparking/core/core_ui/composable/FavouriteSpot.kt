@@ -34,6 +34,16 @@ import com.example.motorcycleparking.core.utils.openGoogleMapsNavigation
 import com.example.motorcycleparking.domain.models.ParkingSpot
 
 
+/**
+ * Displays a parking spot card with navigation and favorite toggle.
+ * Shows confirmation dialogs before actions. Navigation silently fails if coordinates unavailable.
+ *
+ * @param modifier Optional modifier for customization
+ * @param parkingSpot Domain model containing display data and coordinates
+ * @param isFavorite Current favorite state; controls icon appearance only
+ * @param onFavoriteClick Invoked after user confirms favorite toggle
+ * @param cs Color scheme for theming
+ */
 @Composable
 fun ParkingSpotCard(
     modifier: Modifier = Modifier,
@@ -46,17 +56,15 @@ fun ParkingSpotCard(
     var showNavigationDialog by remember { mutableStateOf(false) }
     var showFavoriteDialog by remember { mutableStateOf(false) }
 
-    // Show confirmation dialog with parking spot name
     if (showNavigationDialog) {
         NavigationConfirmationDialog(
             parkingSpotName = parkingSpot.name,
             onConfirm = {
-                // Get geo position of parking spot
                 showNavigationDialog = false
                 val lat = parkingSpot.latitude
                 val lon = parkingSpot.longitude
+                // Silently ignore navigation if coordinates are missing
                 if (lat != null && lon != null) {
-                    // Open google maps with location from parking spot
                     openGoogleMapsNavigation(
                         context = context,
                         latitude = lat,
@@ -70,13 +78,13 @@ fun ParkingSpotCard(
         )
     }
 
-    // Show confirmation dialog if toggling favorite
     if (showFavoriteDialog) {
         FavoriteConfirmationDialog(
             parkingSpotName = parkingSpot.name,
             isFavorite = isFavorite,
             onConfirm = {
                 showFavoriteDialog = false
+                // Delegate actual favorite state persistence to caller
                 onFavoriteClick()
             },
             onDismiss = {
@@ -100,11 +108,9 @@ fun ParkingSpotCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left side: Parking spot details
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                //placeholder = painterResource(R.drawable.exampleworkoutimage), // While loading
                 parkingSpot.name?.let {
                     Text(
                         text = it,
@@ -128,7 +134,7 @@ fun ParkingSpotCard(
 
                 PaidStatus(parkingSpot)
             }
-            // Directions icon for navigation on google maps
+
             IconButton(
                 onClick = {
                     showNavigationDialog = true
@@ -140,7 +146,7 @@ fun ParkingSpotCard(
                     tint = cs.primary
                 )
             }
-            // Heart icon to toggle favorite
+
             IconButton(
                 onClick = {
                     showFavoriteDialog = true
