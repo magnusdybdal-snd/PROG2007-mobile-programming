@@ -31,6 +31,25 @@ import com.example.motorcycleparking.features.registerscreen.RegisterScreen
 import com.example.motorcycleparking.features.settingsscreen.SettingsScreen
 import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 
+/**
+ * Main navigation container for the motorcycle parking application.
+ *
+ * Manages the primary navigation flow between Map, Favorites, and Settings screens,
+ * as well as authentication screens (Login/Register). The bottom navigation bar is
+ * conditionally displayed based on the current route, hiding it for authentication
+ * screens.
+ *
+ * Navigation behavior:
+ * - Uses single-top launch mode to prevent duplicate destinations
+ * - Preserves and restores navigation state on tab switches
+ * - Clears back stack when navigating to login from settings (sign out)
+ * - Start destination is the login screen
+ *
+ * @param modifier Modifier to be applied to the navigation host
+ * @param navController Navigation controller managing the navigation stack and transitions
+ * @param settingsViewModel Hilt-injected view model shared between MainScreen and MapScreen
+ *   for settings state management
+ */
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
@@ -47,7 +66,7 @@ fun MainScreen(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
 
-// Show or hide the bottombar.
+    // Show or hide the bottombar.
     val showBottomBar = navItemList.any { item ->
         currentDestination.isOnRoute(item.route)
     }
@@ -60,7 +79,6 @@ fun MainScreen(
                 NavigationBar(
                     containerColor = cs.surface,
                     contentColor = cs.onSurface
-
                 ) {
                     navItemList.forEach { item ->
                         NavigationBarItem(
@@ -96,15 +114,8 @@ fun MainScreen(
             composable(Routes.FAVORITES)  { FavoriteScreen(Modifier, navController) }
             composable(Routes.SETTINGS)   { SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToLogin = {
-                    // Add your sign-out logic here
-                    // For example:
-                    // - Clear user session
-                    // - Sign out from Firebase Auth
-                    // - Navigate to login screen
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(0) { inclusive = true }  // Clears entire back stack.
-                    }
+                onNavigateToLogin = { // Clears entire back stack with `popUpTo(0)`
+                    navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true }  }
                 },
                 viewModel = settingsViewModel,
                 )
@@ -115,6 +126,15 @@ fun MainScreen(
     }
 }
 
+/**
+ * Checks if this destination or any of its parent destinations matches the given route.
+ *
+ * Traverses the destination hierarchy to determine route matching, useful for
+ * highlighting the correct navigation item when nested navigation is involved.
+ *
+ * @param route The route string to match against the destination hierarchy
+ * @return true if this destination or any parent matches the route, false otherwise
+ */
 private fun NavDestination?.isOnRoute(route: String): Boolean {
     if (this == null) return false
     return hierarchy.any { it.route == route }

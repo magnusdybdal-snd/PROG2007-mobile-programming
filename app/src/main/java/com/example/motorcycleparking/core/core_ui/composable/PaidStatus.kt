@@ -11,6 +11,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.motorcycleparking.domain.models.ParkingSpot
 
+/**
+ * Displays a status badge indicating whether a parking spot is paid, free, or unknown.
+ *
+ * @param parkingSpot Source of the free/paid status; null free value displays "Unknown"
+ */
 @Composable
 fun PaidStatus(parkingSpot: ParkingSpot) {
     val cs = MaterialTheme.colorScheme

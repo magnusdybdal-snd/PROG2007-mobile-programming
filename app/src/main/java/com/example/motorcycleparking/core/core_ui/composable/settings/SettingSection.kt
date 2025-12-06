@@ -11,6 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+/**
+ * A container composable that groups related settings under a titled section.
+ *
+ * @param title The section heading text displayed at the top
+ * @param content The composable content to display within this section, scoped to ColumnScope
+ * for vertical arrangement of child components
+ */
 @Composable
 fun SettingsSection(
     title: String,

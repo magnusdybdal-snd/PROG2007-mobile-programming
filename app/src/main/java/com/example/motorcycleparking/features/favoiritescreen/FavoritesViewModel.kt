@@ -1,6 +1,5 @@
 package com.example.motorcycleparking.features.favoiritescreen
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.motorcycleparking.data.api.FirebaseRepo
@@ -12,6 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Manages favorites state with automatic reloading on favorite changes.
+ *
+ * @property firebaseRepo Repository for fetching user's favorite parking spots
+ * @property toggleFavoriteUseCase Use case for toggling favorites and emitting change events
+ */
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
     private val firebaseRepo: FirebaseRepo,
@@ -30,18 +35,21 @@ class FavoritesViewModel @Inject constructor(
         observeFavoriteChanges()
     }
 
+    /**
+     * Observes favorite change events and triggers reload to keep UI synchronized.
+     */
     private fun observeFavoriteChanges() {
-        Log.d(TAG, "🔔 Started observing favorite changes")
         viewModelScope.launch {
             toggleFavoriteUseCase.favoritesChanged.collect {
-                Log.d(TAG, "🔔 Favorites changed event received - Reloading")
                 loadFavorites()
             }
         }
     }
 
+    /**
+     * Fetches current user's favorites and updates UI state accordingly.
+     */
     fun loadFavorites() {
-        Log.d(TAG, "📥 Loading favorites...")
         viewModelScope.launch {
             _uiState.value = FavoritesUiState.Loading
 
@@ -49,11 +57,9 @@ class FavoritesViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { favorites ->
-                    Log.d(TAG, "✅ Loaded ${favorites.size} favorites")
                     _uiState.value = FavoritesUiState.Success(favorites)
                 },
                 onFailure = { e ->
-                    Log.e(TAG, "❌ Failed to load favorites", e)
                     _uiState.value = FavoritesUiState.Error(
                         message = e.message ?: "Failed to load favorites"
                     )
@@ -63,15 +69,18 @@ class FavoritesViewModel @Inject constructor(
     }
 
 
+    /**
+     * Toggles favorite status for the given parking spot.
+     * Automatic UI reload is handled by observeFavoriteChanges().
+     *
+     * @param spotId Parking spot ID to toggle favorite status for
+     */
     fun toggleFavorite(spotId: String) {
         viewModelScope.launch {
-            Log.d(TAG, "🔄 Toggling favorite: $spotId")
             toggleFavoriteUseCase(spotId)
                 .onSuccess {
-                    Log.d(TAG, "✅ Toggle successful")
                 }
                 .onFailure { e ->
-                    Log.e(TAG, "❌ Failed to toggle favorite: $spotId", e)
                 }
         }
     }

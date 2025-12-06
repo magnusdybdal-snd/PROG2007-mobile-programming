@@ -19,6 +19,26 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+/**
+ * A toggle setting item for use in settings screens.
+ *
+ * Displays a horizontal row containing an icon, title, description, and a toggle switch.
+ * The component uses a Surface with tonal elevation for subtle visual depth.
+ *
+ * The layout structure from left to right:
+ * - Icon with primary color tint (24.dp)
+ * - Title and description in a vertical column (takes available space)
+ * - Toggle switch aligned to the right
+ *
+ * @param icon The icon displayed on the left side of the setting item.
+ * @param title The primary label text for the setting,
+ * @param description Supporting text that explains the setting's purpose or behavior
+ * @param checked The current state of the toggle switch.
+ * @param onCheckedChange Callback invoked when the user toggles the switch. Receives the
+ * new Boolean state as a parameter.
+ * @param modifier Optional [Modifier] for this composable. Applied to the outer Surface
+ * before default padding and sizing modifiers.
+ */
 @Composable
 fun SettingToggleItem(
     icon: ImageVector,

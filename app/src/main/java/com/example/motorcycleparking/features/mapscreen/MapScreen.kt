@@ -39,6 +39,15 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 
+/**
+ * Main map screen displaying parking spots with search, favorites, and add-spot functionality.
+ * Supports marker selection with camera animation and long-press to add new parking spots.
+ *
+ * @param modifier Applied to root Box container
+ * @param navController Navigation controller for screen transitions
+ * @param viewModel Manages map state, location tracking, and parking spot operations
+ * @param settingsViewModel Provides map display settings (type, traffic, etc.)
+ */
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
@@ -103,7 +112,7 @@ fun MapScreen(
         }
         }
 
-        // --- Search Bar Composable ---
+        // Search Bar Composable
         SimpleSearchBar(
             textFieldState = textFieldState,
             onSearch = { query ->
@@ -150,7 +159,7 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
-        // --- Parking Spot Card with dismiss functionality ---
+        //  Parking Spot Card with dismiss functionality
         selectedSpot?.let { spot ->
             // Clickable overlay to dismiss card when tapping outside
             Box(
@@ -198,7 +207,7 @@ fun MapScreen(
             }
         }
 
-        // --- Add Parking Spot Bottom Sheet ---
+        //  Add Parking Spot Bottom Sheet
         if (showAddSpotSheet && addSpotLocation != null) {
             AddParkingSpotBottomSheet(
                 onDismiss = {

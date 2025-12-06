@@ -7,6 +7,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 
+/**
+ * Confirmation dialog for adding or removing a parking spot from favorites.
+ *
+ * Dialog content adapts based on [isFavorite]: shows "Add" or "Remove" confirmation.
+ *
+ * @param parkingSpotName Name displayed in the confirmation message
+ * @param isFavorite Current favorite state - true shows remove dialog, false shows add dialog
+ * @param onConfirm Invoked when user confirms the action
+ * @param onDismiss Invoked when user cancels or dismisses the dialog
+ */
 @Composable
 fun FavoriteConfirmationDialog(
     parkingSpotName: String? = "this parking spot",

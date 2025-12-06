@@ -3,7 +3,6 @@ package com.example.motorcycleparking.core.core_ui.composable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
@@ -39,6 +38,20 @@ data class SearchResultItem(
     val isHistory: Boolean    // True if from history, false if from search results
 )
 
+/**
+ * SearchBar with expandable results list supporting both search history and live results.
+ *
+ * Automatically loads search history when expanded and collapses when search is submitted or a
+ * result is clicked. Differentiates between history and search results with distinct icons.
+ *
+ * @param textFieldState Manages the search query text input
+ * @param onSearch Invoked when user submits search; triggers collapse
+ * @param searchResults Items to display; can be history or search results
+ * @param onExpanded Invoked when search bar expands; use to load search history
+ * @param onQueryChange Invoked on each text change; use to trigger live search
+ * @param onResultClick Invoked when user selects a result; triggers collapse
+ * @param modifier Applied to the container Box
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleSearchBar(
@@ -84,7 +97,6 @@ fun SimpleSearchBar(
                     placeholder = { Text("Search") },
                     colors = AppSearchBar.inputColors()
                 )
-
             },
             expanded = expanded,
             onExpandedChange = { expanded = it },
