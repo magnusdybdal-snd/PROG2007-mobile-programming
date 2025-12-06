@@ -7,6 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
+/**
+ * Displays a centered loading spinner that fills the parent container.
+ */
 @Composable
 fun LoadingStateView() {
     Box(

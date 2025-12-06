@@ -78,6 +78,13 @@ private val DarkColorScheme = darkColorScheme(
     inversePrimary = AppColor.Dark.inversePrimary,
 )
 
+/**
+ * Main theme composable that wraps the app content with Material3 theming.
+ *
+ * @param darkTheme Whether to use dark color scheme
+ * @param dynamicColor Whether to use dynamic colors (Android 12+)
+ * @param content The app content to be themed
+ */
 @Composable
 fun MotorcycleParkingTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -103,10 +110,12 @@ fun MotorcycleParkingTheme(
 }
 
 /**
- * Colors used in styling of NavigationBarItem.
- * @return NavigationBarIdemDefault with colors from appropriate theme.
+ * Provides styled NavigationBarItem colors for the app's bottom navigation.
  */
 object AppNavBar {
+    /**
+     * Returns NavigationBarItemColors with app-specific color scheme.
+     */
     @Composable
     fun itemColors(): NavigationBarItemColors {
         val cs = MaterialTheme.colorScheme      // "cs" is short for "ColorScheme"
@@ -122,8 +131,14 @@ object AppNavBar {
     }
 }
 
+/**
+ * Provides styled SearchBar colors for the app's search functionality.
+ */
 object AppSearchBar {
 
+    /**
+     * Returns input field colors for SearchBar text and icons.
+     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun inputColors() = SearchBarDefaults.inputFieldColors(
@@ -138,6 +153,9 @@ object AppSearchBar {
         unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface  // ← BLACK
     )
 
+    /**
+     * Returns container and divider colors for SearchBar.
+     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun colors() = SearchBarDefaults.colors(
@@ -146,7 +164,13 @@ object AppSearchBar {
     )
 }
 
+/**
+ * Provides styled Card colors for the app's card components.
+ */
 object AppCard {
+    /**
+     * Returns CardColors with app-specific color scheme for enabled and disabled states.
+     */
     @Composable
     fun colors(): CardColors {
         val cs = MaterialTheme.colorScheme

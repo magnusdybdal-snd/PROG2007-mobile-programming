@@ -9,6 +9,14 @@ import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 
+/**
+ * Creates a cached, scaled BitmapDescriptor for Google Maps markers.
+ * Result is remembered and only recomputed when resId or sizePx changes.
+ *
+ * @param resId Drawable resource to decode and scale
+ * @param sizePx Target size in pixels for square bitmap dimensions
+ * @return Scaled BitmapDescriptor suitable for Google Maps Marker icons
+ */
 @Composable
 fun rememberScaledMarker(
     @DrawableRes resId: Int,
