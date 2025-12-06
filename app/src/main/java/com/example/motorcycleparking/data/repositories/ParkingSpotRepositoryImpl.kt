@@ -29,6 +29,24 @@ class ParkingSpotRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun addParkingSpot(
+        name: String,
+        note: String,
+        displayAddress: String,
+        latitude: Double,
+        longitude: Double,
+        isFree: Boolean
+    ): Result<String> {
+        return firebaseRepo.addParkingSpot(
+            name = name,
+            note = note,
+            displayAddress = displayAddress,
+            latitude = latitude,
+            longitude = longitude,
+            isFree = isFree
+        )
+    }
 }
 
 fun ParkingSpotDto.toDomain(): ParkingSpot {

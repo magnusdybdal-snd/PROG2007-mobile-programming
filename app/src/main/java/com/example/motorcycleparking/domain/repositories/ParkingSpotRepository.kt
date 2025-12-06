@@ -20,5 +20,5 @@ interface ParkingSpotRepository {
         latitude: Double,
         longitude: Double,
         isFree: Boolean
-    ): Result<Unit>
+    ): Result<String>
 }
