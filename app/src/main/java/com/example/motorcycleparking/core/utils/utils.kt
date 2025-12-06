@@ -41,6 +41,15 @@ private val BORDERS = mapOf(
     )
 )
 
+/**
+ * Opens Google Maps navigation to specified coordinates with fallback to browser.
+ * Attempts to launch the Google Maps app first; falls back to browser if unavailable.
+ *
+ * @param context Android Context for starting activities
+ * @param latitude Target latitude coordinate
+ * @param longitude Target longitude coordinate
+ * @param directNavigation If true, starts navigation immediately; if false, shows route preview
+ */
 fun openGoogleMapsNavigation(
     context: Context,
     latitude: Double,
@@ -76,10 +85,15 @@ fun openGoogleMapsNavigation(
     }
 }
 
+/**
+ * Utility functions for geohash operations including encoding, neighbor calculation, and precision mapping.
+ */
 object GeoUtils {
     /**
-     * Convert Google Maps zoom level to geohash precision
-     * Higher zoom = more precision = more geohash characters
+     * Converts Google Maps zoom level to geohash precision.
+     *
+     * @param zoom Current map zoom level
+     * @return Geohash precision (1-7 characters); higher zoom returns higher precision
      */
     fun zoomLevelToPrecision(zoom: Float): Int {
         return when {
@@ -94,7 +108,11 @@ object GeoUtils {
     }
 
     /**
-     * Get the neighbors of a given hash
+     * Calculates all 8 neighboring geohashes (cardinal directions and diagonals).
+     *
+     * @param geoHash Center geohash to find neighbors for
+     * @param includeCenter If true, includes the center geohash in returned list
+     * @return List of neighboring geohashes; empty list if input is empty
      */
     fun getNeighbors(geoHash: String, includeCenter: Boolean = false): List<String> {
         if (geoHash.isEmpty()) return emptyList()
@@ -120,7 +138,12 @@ object GeoUtils {
     }
 
     /**
-     * Calculate the adjacent border for a given geohash
+     * Calculates the adjacent geohash in the specified cardinal direction.
+     *
+     * @param geoHash Source geohash
+     * @param dir Direction: "n" (north), "s" (south), "e" (east), or "w" (west)
+     * @return Adjacent geohash in specified direction; empty string if input is empty
+     * @throws IllegalArgumentException if direction is invalid or geohash contains invalid characters
      */
     fun calculateAdjacent(geoHash: String, dir: String): String {
         if (geoHash.isEmpty()) return ""
@@ -152,7 +175,12 @@ object GeoUtils {
     }
 
     /**
-     * Encode a simple lat and lon point and generate a square with the point
+     * Encodes latitude and longitude coordinates into a geohash string.
+     *
+     * @param lat Latitude coordinate (-90.0 to 90.0)
+     * @param lon Longitude coordinate (-180.0 to 180.0)
+     * @param precision Number of characters in resulting geohash (defaults to 12)
+     * @return Geohash string representing the geographic area containing the coordinates
      */
     fun encodeGeohash(lat: Double, lon: Double, precision: Int = 12): String {
         var isEven = true
