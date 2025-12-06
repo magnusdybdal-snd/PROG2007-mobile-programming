@@ -271,18 +271,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Adds a new user-contributed parking spot to the database.
-     *
-     * @param name Display name for the parking spot
-     * @param note Additional user notes or description
-     * @param address Human-readable address
-     * @param latitude Coordinate latitude
-     * @param longitude Coordinate longitude
-     * @param isFree Whether the parking is free or paid
-     * @param onSuccess Callback invoked when spot is successfully added
-     * @param onFailure Callback invoked on failure with error message
-     */
+
     fun addParkingSpot(
         name: String,
         note: String,

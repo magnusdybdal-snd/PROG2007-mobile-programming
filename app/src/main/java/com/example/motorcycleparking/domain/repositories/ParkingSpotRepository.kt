@@ -13,6 +13,16 @@ interface ParkingSpotRepository {
         position: LatLng
     ): Result<List<ParkingSpot>>
 
+    /**
+     * Adds a new user-contributed parking spot to the database.
+     *
+     * @param name Display name for the parking spot
+     * @param note Additional user notes or description
+     * @param address Human-readable address
+     * @param latitude Coordinate latitude
+     * @param longitude Coordinate longitude
+     * @param isFree Whether the parking is free or paid
+     */
     suspend fun addParkingSpot(
         name: String,
         note: String,
