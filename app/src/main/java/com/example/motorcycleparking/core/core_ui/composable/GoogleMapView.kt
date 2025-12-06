@@ -1,16 +1,15 @@
 package com.example.motorcycleparking.core.core_ui.composable
 
+import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -35,7 +34,9 @@ import com.example.motorcycleparking.features.settingsscreen.SettingsViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -48,9 +49,8 @@ import timber.log.Timber
 fun GoogleMapView(
     mapViewModel: MapViewModel,
     settingsViewModel: SettingsViewModel,
-    cameraPositionState: com.google.maps.android.compose.CameraPositionState = rememberCameraPositionState(),
-    cs: ColorScheme = MaterialTheme.colorScheme,
-    onMapLongClick: (com.google.android.gms.maps.model.LatLng) -> Unit = {},
+    cameraPositionState: CameraPositionState = rememberCameraPositionState(),
+    onMapLongClick: (LatLng) -> Unit = {},
     content: @Composable () -> Unit  // Changed from 'function' to 'content' (better naming)
 ) {
     // Obtain the current context
@@ -58,6 +58,8 @@ fun GoogleMapView(
     // Observe the user's location from the ViewModel
     val userLocation by mapViewModel.userLocation
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    val cs = MaterialTheme.colorScheme
 
     // Observe settings state - using collectAsStateWithLifecycle
     val settingsState by settingsViewModel.settingsState.collectAsStateWithLifecycle()
@@ -85,7 +87,7 @@ fun GoogleMapView(
         mutableStateOf(
             ContextCompat.checkSelfPermission(
                 context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
@@ -96,7 +98,7 @@ fun GoogleMapView(
             // Check if the location permission is already granted
             ContextCompat.checkSelfPermission(
                 context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) -> {
                 // Fetch the user's location
                 mapViewModel.fetchUserLocation(context, fusedLocationClient)
@@ -106,9 +108,10 @@ fun GoogleMapView(
                     mapViewModel.startLocationUpdates(context, fusedLocationClient)
                 }
             }
+
             else -> {
                 // Request the location permission if it has not been granted
-                permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
     }
@@ -162,29 +165,19 @@ fun GoogleMapView(
         }
     }
 
-    // Load ALL spots visible on screen when camera stops moving
+    // Load parking spots when camera stops moving (for panning/zooming)
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
-            val projection = cameraPositionState.projection
-
-            if (projection != null) {
-                // Get the actual visible region bounds via "google magic"
-                // Converts screen pixels to lagLng.
-                val visibleRegion = projection.visibleRegion
-                val bounds = visibleRegion.latLngBounds
-
-                Timber.d("📍 Camera stopped - visible area:")
-                Timber.d("   SW: (${bounds.southwest.latitude}, ${bounds.southwest.longitude})")
-                Timber.d("   NE: (${bounds.northeast.latitude}, ${bounds.northeast.longitude})")
-
-                // Load all spots in this bounding box
-                mapViewModel.loadParkingSpotsInBounds(
-                    swLat = bounds.southwest.latitude,
-                    swLng = bounds.southwest.longitude,
-                    neLat = bounds.northeast.latitude,
-                    neLng = bounds.northeast.longitude
-                )
-            }
+            val center = cameraPositionState.position.target
+            val zoom = cameraPositionState.position.zoom
+            mapViewModel.loadParkingSpotsInBounds(
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                zoom,
+                center = center
+            )
         }
     }
 
@@ -193,7 +186,8 @@ fun GoogleMapView(
 
     // Create dark mode map style matching Google Maps dark theme
     val mapStyleOptions = if (isDarkMode) {
-        MapStyleOptions("""
+        MapStyleOptions(
+            """
             [
               {
                 "elementType": "geometry",
@@ -283,7 +277,8 @@ fun GoogleMapView(
                 "stylers": [{"color": "#17263c"}]
               }
             ]
-        """.trimIndent())
+        """.trimIndent()
+        )
     } else {
         null // Use default light map style
     }

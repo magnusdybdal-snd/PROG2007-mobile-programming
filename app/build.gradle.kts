@@ -1,6 +1,12 @@
 import java.io.FileInputStream
 import java.util.Properties
 
+configurations.all {
+    resolutionStrategy {
+        force("com.google.protobuf:protobuf-javalite:3.24.0")
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)

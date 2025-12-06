@@ -1,15 +1,16 @@
 package com.example.motorcycleparking.data.api
 
 import android.util.Log
-import com.example.motorcycleparking.core.utils.encodeGeohash
-import com.example.motorcycleparking.core.utils.getNeighbors
+import com.example.motorcycleparking.core.utils.GeoUtils
+import com.example.motorcycleparking.core.utils.GeoUtils.encodeGeohash
+import com.example.motorcycleparking.core.utils.GeoUtils.getNeighbors
 import com.example.motorcycleparking.data.api.dto.FavoritesDto
 import com.example.motorcycleparking.data.api.dto.HistoryDto
 import com.example.motorcycleparking.data.api.dto.ParkingSpotDto
 import com.example.motorcycleparking.data.api.dto.SearchDto
-import com.example.motorcycleparking.data.api.dto.toDomain
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -26,12 +27,28 @@ import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import javax.inject.Inject
 
+/**
+ * Repository responsible for handling Firebase Authentication and Firestore interactions.
+ *
+ * Provides:
+ * - Google & Email authentication
+ * - Parking spot geolocation queries using geohashes
+ * - Search history & favorites management
+ * - Firestore CRUD helpers for parking spots
+ */
 class FirebaseRepo @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
     private val auth: FirebaseAuth = Firebase.auth
     private val db = Firebase.firestore
 
+    /**
+     * Signs in the user using their Google account.
+     *
+     * @param account The Google account returned by the Google Sign-In intent.
+     * @return The authenticated Firebase user ID.
+     * @throws Exception if the sign-in fails.
+     */
     suspend fun signInWithGoogle(account: GoogleSignInAccount): String {
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
         val uid = auth.signInWithCredential(credential)
@@ -46,6 +63,12 @@ class FirebaseRepo @Inject constructor(
         return uid
     }
 
+    /**
+     * Signs in a user using an email/password combination.
+     *
+     * @return The user's Firebase UID.
+     * @throws Exception on sign-in failure.
+     */
     suspend fun signInWithEmailPassword(
         email: String,
         password: String,
@@ -57,10 +80,18 @@ class FirebaseRepo @Inject constructor(
             ?: throw Exception("Sign in failed")
     }
 
+    /**
+     * Creates a user using email/password and sets up their Firestore profile document.
+     *
+     * Initializes:
+     *  - favorites = empty list
+     *
+     * @return The newly created FirebaseUser, or null if creation failed.
+     */
     suspend fun createUser(email: String, password: String): FirebaseUser? {
         val result = auth.createUserWithEmailAndPassword(email, password).await()
         val user = result.user ?: return null
-        Timber.tag("UserCreation").d("Successfully created account")
+
         try {
             val userData = hashMapOf(
                 "favorites" to emptyList<String>()
@@ -68,14 +99,16 @@ class FirebaseRepo @Inject constructor(
 
             db.collection("users").document(user.uid).set(userData).await()
         } catch (e: Exception) {
-            Timber.tag("UserCreation").e(e, "Failed to create user in Firestore document")
+            Timber.tag("UserCreation").e(e, "Failed to create user Firestore document")
         }
         return user
     }
 
+    /** Signs out the currently authenticated user. */
     fun signOut() {
         auth.signOut()
     }
+
 
     private suspend fun initializeUserDocument(uid: String) {
         try {
@@ -96,60 +129,18 @@ class FirebaseRepo @Inject constructor(
         }
     }
 
-    suspend fun getParkingspotsNearYou(
-        geoPoint: GeoPoint,
-        precision: Int = 6
-    ): Result<List<ParkingSpot>> {
-        return try {
-            val geoHash = encodeGeohash(geoPoint.latitude, geoPoint.longitude, precision)
-            val dtoList = mutableListOf<ParkingSpotDto>()
-
-            val geoHashNeighbors = getNeighbors(geoHash, true)
-
-            val results = mutableListOf<ParkingSpot>()
-
-            for (hash in geoHashNeighbors) {
-                val docs = db.collection("parkingspots")
-                    .orderBy("geo_hash")
-                    .startAt(hash)
-                    .endAt(hash + "\uf8ff")
-                    .get()
-                    .await()
-
-                for (doc in docs) {
-                    val dto = ParkingSpotDto(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "",
-                        note = doc.getString("note") ?: "",
-                        displayAddress = doc.getString("display_address") ?: "",
-                        geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
-                        free = doc.getBoolean("free") ?: false
-                    )
-                    dtoList.add(dto)
-                    Log.d(
-                        "FirebaseRepo",
-                        "   Added spot: ${dto.name} at (${dto.geoPoint.latitude}, ${dto.geoPoint.longitude})"
-                    )
-                }
-            }
-            val domainList = dtoList.toDomain()
-            Log.d("FirebaseRepo", "✅ Successfully fetched ${results.size} parking spots")
-            Result.success(domainList)
-
-        } catch (e: Exception) {
-            Log.e("FirebaseRepo", "❌ Error fetching from Firestore: ${e.message}", e)
-            Log.e("FirebaseRepo", "Error type: ${e.javaClass.simpleName}")
-            Result.failure(e)
-        }
-    }
-
+    /** Returns the currently logged-in user's UID, or null if not authenticated. */
     suspend fun getCurrentUserId(): String? {
         return auth.currentUser?.uid
     }
 
+    /**
+     * Toggles a parking spot in the user's favorites list.
+     *
+     * Uses a Firestore transaction to ensure safe concurrent updates.
+     */
     suspend fun toggleFavorite(spotId: String) {
         val userId = auth.currentUser?.uid ?: return
-
         val userRef = db.collection("users").document(userId)
 
         try {
@@ -163,14 +154,20 @@ class FirebaseRepo @Inject constructor(
                 } else {
                     favorites.add(spotId)
                 }
+
                 transaction.update(userRef, "favorites", favorites)
             }.await()
 
         } catch (e: Exception) {
-            Timber.tag("UpdatedFaves").e(e, "Failed to update favorites for $userId")
+            Timber.tag("UpdatedFaves").e(e, "Failed to update favorites")
         }
     }
 
+    /**
+     * Retrieves all parking spots that the user has marked as favorites.
+     *
+     * Handles Firestore’s limitation of 10 IDs per `whereIn` call by chunking.
+     */
     suspend fun getFavorites(): Result<List<ParkingSpot>> {
         return try {
             val userId =
@@ -183,39 +180,40 @@ class FirebaseRepo @Inject constructor(
 
             val favoriteIds = snapshot.toObject(FavoritesDto::class.java)?.favorites.orEmpty()
 
-            if (favoriteIds.isEmpty()) {
-                return Result.success(emptyList())
-            }
+            if (favoriteIds.isEmpty()) return Result.success(emptyList())
 
-            // Firestore allows 10 items per whereIn query
+            // Chunk into groups of 10 (Firestore limit)
             val spots = favoriteIds.chunked(10).flatMap { chunk ->
                 val docs = db.collection("parkingspots")
                     .whereIn(FieldPath.documentId(), chunk)
                     .get()
                     .await()
 
-                    docs.documents.mapNotNull { doc ->
-                        doc.getGeoPoint("geo_point")?.let { geo ->
-                            ParkingSpot(
-                                id = doc.id,
-                                name = doc.getString("name") ?: "",
-                                note = doc.getString("note") ?: "",
-                                displayAddress = doc.getString("display_address") ?: "",
-                                latitude = geo.latitude,
-                                longitude = geo.longitude,
-                                free = doc.getBoolean("free")
-                            )
-                        }
+                docs.documents.mapNotNull { doc ->
+                    doc.getGeoPoint("geo_point")?.let { geo ->
+                        ParkingSpot(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            note = doc.getString("note") ?: "",
+                            displayAddress = doc.getString("display_address") ?: "",
+                            latitude = geo.latitude,
+                            longitude = geo.longitude,
+                            free = doc.getBoolean("free")
+                        )
                     }
+                }
             }.distinctBy { it.id }
+
             Result.success(spots)
 
         } catch (e: Exception) {
-            Timber.tag("FirestoreError").e(e, "Error fetching favorites for user")
             Result.failure(e)
         }
     }
 
+    /**
+     * Fetch a single parking spot by its Firestore ID.
+     */
     suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
         return try {
             val doc = db.collection("parkingspots")
@@ -224,7 +222,7 @@ class FirebaseRepo @Inject constructor(
                 .await()
 
             val geo = doc.getGeoPoint("geo_point")
-                ?: return Result.failure(Exception("GeoPoint missing for spot $spotId"))
+                ?: return Result.failure(Exception("GeoPoint missing"))
 
             val spot = ParkingSpot(
                 id = doc.id,
@@ -242,6 +240,9 @@ class FirebaseRepo @Inject constructor(
         }
     }
 
+    /**
+     * Returns the user's search history (max 20 most recent).
+     */
     suspend fun getSearchHistory(): Result<List<HistoryDto>> {
         return try {
             val userId =
@@ -253,16 +254,21 @@ class FirebaseRepo @Inject constructor(
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .await()
-                .documents.mapNotNull { doc ->
-                    doc.toObject(HistoryDto::class.java)
-                }
+                .documents.mapNotNull { it.toObject(HistoryDto::class.java) }
 
             Result.success(history)
+
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
+    /**
+     * Adds a parking spot search to the history.
+     *
+     * - Keeps only the 10 newest entries.
+     * - If a spot is already in the history, its timestamp is updated instead.
+     */
     suspend fun addToSearchHistory(spotId: String, searched: String) {
         val userId = auth.currentUser?.uid ?: return
 
@@ -278,19 +284,14 @@ class FirebaseRepo @Inject constructor(
         val docs = snapshot.documents
 
         db.runTransaction { tx ->
-            val docsToRemove = if (docs.size >= 10) {
-                docs.drop(9)  // keep the newest 9, remove the rest
-            } else {
-                emptyList()
-            }
+            // Remove old entries (keep newest 9)
+            val docsToRemove = if (docs.size >= 10) docs.drop(9) else emptyList()
+            docsToRemove.forEach { tx.delete(it.reference) }
 
-            for (doc in docsToRemove) {
-                tx.delete(doc.reference)
-            }
-
+            // Update or create entry
             val existingDoc = docs.find { it.getString("parkingspot_id") == spotId }
-
             val docRef = existingDoc?.reference ?: historyCol.document()
+
             val data = HistoryDto(
                 parkingId = spotId,
                 search = searched,
@@ -301,9 +302,16 @@ class FirebaseRepo @Inject constructor(
         }.await()
     }
 
+    /**
+     * Searches for parking spots by name (prefix search).
+     *
+     * Uses:
+     *  where name_lowercase >= search
+     *  where name_lowercase <= search + "\uf8ff"
+     */
     suspend fun getTitlesInSearch(search: String, limit: Long = 10): Result<List<SearchDto>> {
         return try {
-            val lowerSearch: String = search.lowercase()
+            val lowerSearch = search.lowercase()
 
             val snapshot = db.collection("parkingspots")
                 .whereGreaterThanOrEqualTo("name_lowercase", lowerSearch)
@@ -312,86 +320,73 @@ class FirebaseRepo @Inject constructor(
                 .get()
                 .await()
 
-            val searchedResults = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(SearchDto::class.java)
-            }
+            Result.success(snapshot.documents.mapNotNull { it.toObject(SearchDto::class.java) })
 
-            Result.success(searchedResults)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-
     /**
-     * Returns all parking spots within the visible map bounds.
+     * Returns all parking spots within visible map bounds.
      *
-     * Fetches all spots from Firestore and filters by lat/lng coordinates.
-     * A spot is included if:
-     * - `swLat <= spot.latitude <= neLat`
-     * - `swLng <= spot.longitude <= neLng`
+     * Uses geohash-based filtering from the map center's precision.
+     * This reduces Firestore reads compared to fetching everything.
      *
-     * @param swLat Bottom-left latitude
-     * @param swLng Bottom-left longitude
-     * @param neLat Top-right latitude
-     * @param neLng Top-right longitude
-     *
-     * @return Success with spots list, or Failure with exception
-     *
-     * Note: Uses client-side filtering. Fine for small datasets.
-     * Replace with geohash queries for production use with many spots.
+     * @param zoom Map zoom level → used to determine geohash precision.
      */
     suspend fun getParkingSpotsInBounds(
-        swLat: Double,
-        swLng: Double,
-        neLat: Double,
-        neLng: Double
-    ): Result<List<ParkingSpot>> {
-        Log.d("FirebaseRepo", "📡 Getting all spots in bounds")
-        Log.d("FirebaseRepo", "   SW: ($swLat, $swLng)")
-        Log.d("FirebaseRepo", "   NE: ($neLat, $neLng)")
-
+        zoom: Float,
+        center: LatLng
+    ): Result<List<ParkingSpotDto>> {
         return try {
-            val allDocs = db.collection("parkingspots")
-                .get()
-                .await()
+            val precision = GeoUtils.zoomLevelToPrecision(zoom)
+            val centerHash = encodeGeohash(center.latitude, center.longitude, precision)
+            val searchHashes = getNeighbors(centerHash, includeCenter = true)
 
-            Log.d("FirebaseRepo", "📦 Found ${allDocs.size()} total spots in database")
+            val results = mutableListOf<ParkingSpotDto>()
 
-            val spotsInBounds = mutableListOf<ParkingSpotDto>()
+            for (hash in searchHashes) {
+                try {
+                    val snapshot = db.collection("parkingspots")
+                        .orderBy("geo_hash")
+                        .startAt(hash)
+                        .endAt(hash + "\uf8ff")
+                        .get()
+                        .await()
 
-            for (doc in allDocs) {
-                val point = doc.getGeoPoint("geo_point") ?: continue
+                    // Convert Firestore docs to DTOs manually to include id
+                    for (doc in snapshot.documents) {
+                        val dto = ParkingSpotDto(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            note = doc.getString("note") ?: "",
+                            displayAddress = doc.getString("display_address") ?: "",
+                            geoPoint = doc.getGeoPoint("geo_point") ?: GeoPoint(0.0, 0.0),
+                            free = doc.getBoolean("free") ?: false
+                        )
+                        results.add(dto)
+                    }
 
-                // Check if spot is within bounds
-                if (point.latitude >= swLat &&
-                    point.latitude <= neLat &&
-                    point.longitude >= swLng &&
-                    point.longitude <= neLng
-                ) {
-
-                    val dto = ParkingSpotDto(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "",
-                        note = doc.getString("note") ?: "",
-                        displayAddress = doc.getString("display_address") ?: "",
-                        geoPoint = point,
-                        free = doc.getBoolean("free") ?: false
-                    )
-                    spotsInBounds.add(dto)
-                    Log.d("FirebaseRepo", "   ✅ ${dto.name} is in bounds")
+                } catch (e: Exception) {
+                    Log.e("GeoSearch", "Error fetching hash $hash", e)
                 }
             }
 
-            Log.d("FirebaseRepo", "✅ ${spotsInBounds.size} spots within visible area")
-            Result.success(spotsInBounds.toDomain())
+            Result.success(results)
 
         } catch (e: Exception) {
-            Log.e("FirebaseRepo", "❌ Error: ${e.message}", e)
             Result.failure(e)
         }
     }
 
+    /**
+     * Adds a new parking spot to Firestore.
+     *
+     * Automatically sets:
+     *  - lowercase name (for search)
+     *  - geohash & geopoint
+     */
     suspend fun addParkingSpot(
         name: String,
         note: String,
@@ -402,14 +397,13 @@ class FirebaseRepo @Inject constructor(
     ): Result<String> {
         return try {
             val geoHash = encodeGeohash(latitude, longitude, precision = 7)
-            val geoPoint = GeoPoint(latitude, longitude)
 
             val parkingSpotData = hashMapOf(
                 "name" to name,
                 "name_lowercase" to name.lowercase(),
                 "note" to note,
                 "display_address" to displayAddress,
-                "geo_point" to geoPoint,
+                "geo_point" to GeoPoint(latitude, longitude),
                 "geo_hash" to geoHash,
                 "free" to isFree
             )
@@ -418,13 +412,10 @@ class FirebaseRepo @Inject constructor(
                 .add(parkingSpotData)
                 .await()
 
-            Timber.tag("FirebaseRepo").d("Successfully added parking spot with ID: ${docRef.id}")
             Result.success(docRef.id)
 
         } catch (e: Exception) {
-            Timber.tag("FirebaseRepo").e(e, "Failed to add parking spot")
             Result.failure(e)
         }
     }
 }
-
