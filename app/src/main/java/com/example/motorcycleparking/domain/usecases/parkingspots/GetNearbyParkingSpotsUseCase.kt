@@ -8,7 +8,7 @@ import javax.inject.Inject
 class GetNearbyParkingSpotsUseCase @Inject constructor(
     private val repository: ParkingSpotRepository
 ) {
-    suspend fun getInBounds(
+    suspend operator fun invoke(
         swLat: Double,
         swLng: Double,
         neLat: Double,

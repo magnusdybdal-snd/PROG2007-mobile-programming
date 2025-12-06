@@ -14,6 +14,7 @@ import com.example.motorcycleparking.data.api.FirebaseRepo
 import com.example.motorcycleparking.domain.usecases.parkingspots.GetNearbyParkingSpotsUseCase
 import com.example.motorcycleparking.domain.usecases.favorites.GetFavoritesUseCase
 import com.example.motorcycleparking.domain.usecases.favorites.ToggleFavoriteUseCase
+import com.example.motorcycleparking.domain.usecases.parkingspots.AddParkingSpotsUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -37,6 +38,7 @@ class MapViewModel @Inject constructor(
     private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
     private val getFavoritesUseCase: GetFavoritesUseCase,
     val firebaseRepo: FirebaseRepo,
+    private val addParkingSpotsUseCase: AddParkingSpotsUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
@@ -90,7 +92,7 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            getNearbyParkingSpotsUseCase.getInBounds(
+            getNearbyParkingSpotsUseCase(
                 swLat = swLat,
                 swLng = swLng,
                 neLat = neLat,
@@ -271,33 +273,27 @@ class MapViewModel @Inject constructor(
         }
     }
 
-
     fun addParkingSpot(
         name: String,
         note: String,
-        address: String,
+        displayAddress: String,
         latitude: Double,
         longitude: Double,
-        isFree: Boolean,
-        onSuccess: () -> Unit = {},
-        onFailure: (String) -> Unit = {}
+        isFree: Boolean
     ) {
         viewModelScope.launch {
-            firebaseRepo.addParkingSpot(
-                name = name,
-                note = note,
-                displayAddress = address,
-                latitude = latitude,
-                longitude = longitude,
-                isFree = isFree
+            _uiState.value = MapUiState(
+                isLoading = true
             )
-                .onSuccess { spotId ->
-                    Log.d(TAG, "Successfully added parking spot with ID: $spotId")
-                    onSuccess()
+
+            addParkingSpotsUseCase(name, note, displayAddress, latitude, longitude, isFree)
+                .onSuccess {
+                    //TODO: Implement
                 }
                 .onFailure { exception ->
-                    Log.e(TAG, "Failed to add parking spot: ${exception.message}", exception)
-                    onFailure(exception.message ?: "Failed to add parking spot")
+                    _uiState.value = MapUiState(
+                        errorMessage = exception.message ?: "Error adding parkingspot"
+                    )
                 }
         }
     }

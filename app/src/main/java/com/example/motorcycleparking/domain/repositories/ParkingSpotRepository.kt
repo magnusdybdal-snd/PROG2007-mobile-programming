@@ -18,7 +18,7 @@ interface ParkingSpotRepository {
      *
      * @param name Display name for the parking spot
      * @param note Additional user notes or description
-     * @param address Human-readable address
+     * @param displayAddress Human-readable address
      * @param latitude Coordinate latitude
      * @param longitude Coordinate longitude
      * @param isFree Whether the parking is free or paid

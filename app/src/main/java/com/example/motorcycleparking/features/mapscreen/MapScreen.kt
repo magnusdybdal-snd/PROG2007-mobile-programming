@@ -219,26 +219,10 @@ fun MapScreen(
                         viewModel.addParkingSpot(
                             name = name,
                             note = note,
-                            address = address,
+                            displayAddress = address,
                             latitude = location.latitude,
                             longitude = location.longitude,
-                            isFree = isFree,
-                            onSuccess = {
-                                Toast.makeText(
-                                    context,
-                                    "Parking spot added successfully!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                showAddSpotSheet = false
-                                addSpotLocation = null
-                            },
-                            onFailure = { error ->
-                                Toast.makeText(
-                                    context,
-                                    "Failed to add spot: $error",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+                            isFree = isFree
                         )
                     }
                 },
