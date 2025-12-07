@@ -57,6 +57,9 @@ class ParkingSpotRepositoryImpl @Inject constructor(
     }
 }
 
+/**
+ * Extension function to map from dto to domain
+ */
 fun ParkingSpotDto.toDomain(): ParkingSpot {
     return ParkingSpot(
         name = this.name,
