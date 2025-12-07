@@ -134,8 +134,7 @@ fun MapScreen(
 
                 // Get the parking spot and show it on the map
                 coroutineScope.launch {
-                    viewModel.
-                    viewModel.firebaseRepo.getParkingById(result.id)
+                    viewModel.getParkingSpotForDisplay(result.id)
                         .onSuccess { parkingSpot ->
                             selectedSpot = parkingSpot
                             // Animate camera to the selected spot with zoom level
