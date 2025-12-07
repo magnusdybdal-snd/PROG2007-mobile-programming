@@ -10,9 +10,15 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.motorcycleparking.core.core_ui.composable.SearchResultItem
-import com.example.motorcycleparking.data.api.FirebaseRepo
-import com.example.motorcycleparking.domain.usecases.GetNearbyParkingSpotsUseCase
-import com.example.motorcycleparking.domain.usecases.ToggleFavoriteUseCase
+import com.example.motorcycleparking.domain.models.ParkingSpot
+import com.example.motorcycleparking.domain.usecases.parkingspots.GetNearbyParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.favorites.GetFavoritesUseCase
+import com.example.motorcycleparking.domain.usecases.favorites.ToggleFavoriteUseCase
+import com.example.motorcycleparking.domain.usecases.parkingspots.AddParkingSpotsUseCase
+import com.example.motorcycleparking.domain.usecases.parkingspots.GetParkingSpotByIdUseCase
+import com.example.motorcycleparking.domain.usecases.search.AddToSearchHistoryUseCase
+import com.example.motorcycleparking.domain.usecases.search.GetSearchHistoryUseCase
+import com.example.motorcycleparking.domain.usecases.search.SearchParkingSpotsUseCase
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -34,7 +40,12 @@ import javax.inject.Inject
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val getNearbyParkingSpotsUseCase: GetNearbyParkingSpotsUseCase,
-    val firebaseRepo: FirebaseRepo,
+    private val getFavoritesUseCase: GetFavoritesUseCase,
+    private val getParkingSpotByIdUseCase: GetParkingSpotByIdUseCase,
+    private val addToSearchHistoryUseCase: AddToSearchHistoryUseCase,
+    private val getSearchHistoryUseCase: GetSearchHistoryUseCase,
+    private val searchParkingSpotsUseCase: SearchParkingSpotsUseCase,
+    private val addParkingSpotsUseCase: AddParkingSpotsUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
@@ -88,7 +99,7 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            getNearbyParkingSpotsUseCase.getInBounds(
+            getNearbyParkingSpotsUseCase(
                 swLat = swLat,
                 swLng = swLng,
                 neLat = neLat,
@@ -235,18 +246,14 @@ class MapViewModel @Inject constructor(
     // Load user's favorite parking spots
     private fun loadFavorites() {
         viewModelScope.launch {
-            try {
-                firebaseRepo.getFavorites()
-                    .onSuccess { favorites ->
-                        _favoriteIds.value = favorites.mapNotNull { it.id }.toSet()
-                        Log.d(TAG, "Loaded ${favorites.size} favorites")
-                    }
-                    .onFailure { e ->
-                        Log.e(TAG, "Error loading favorites", e)
-                    }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading favorites", e)
-            }
+            getFavoritesUseCase()
+                .onSuccess { favorites ->
+                    _favoriteIds.value = favorites.mapNotNull { it.id }.toSet()
+                    Log.d(TAG, "Loaded ${favorites.size} favorites")
+                }
+                .onFailure { e ->
+                    Log.e(TAG, "Error loading favorites", e)
+                }
         }
     }
 
@@ -273,44 +280,27 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Adds a new user-contributed parking spot to the database.
-     *
-     * @param name Display name for the parking spot
-     * @param note Additional user notes or description
-     * @param address Human-readable address
-     * @param latitude Coordinate latitude
-     * @param longitude Coordinate longitude
-     * @param isFree Whether the parking is free or paid
-     * @param onSuccess Callback invoked when spot is successfully added
-     * @param onFailure Callback invoked on failure with error message
-     */
     fun addParkingSpot(
         name: String,
         note: String,
-        address: String,
+        displayAddress: String,
         latitude: Double,
         longitude: Double,
-        isFree: Boolean,
-        onSuccess: () -> Unit = {},
-        onFailure: (String) -> Unit = {}
+        isFree: Boolean
     ) {
         viewModelScope.launch {
-            firebaseRepo.addParkingSpot(
-                name = name,
-                note = note,
-                displayAddress = address,
-                latitude = latitude,
-                longitude = longitude,
-                isFree = isFree
+            _uiState.value = MapUiState(
+                isLoading = true
             )
-                .onSuccess { spotId ->
-                    Log.d(TAG, "Successfully added parking spot with ID: $spotId")
-                    onSuccess()
+
+            addParkingSpotsUseCase(name, note, displayAddress, latitude, longitude, isFree)
+                .onSuccess {
+                    //TODO: Implement
                 }
                 .onFailure { exception ->
-                    Log.e(TAG, "Failed to add parking spot: ${exception.message}", exception)
-                    onFailure(exception.message ?: "Failed to add parking spot")
+                    _uiState.value = MapUiState(
+                        errorMessage = exception.message ?: "Error adding parkingspot"
+                    )
                 }
         }
     }
@@ -321,21 +311,20 @@ class MapViewModel @Inject constructor(
      */
     fun loadSearchHistory() {
         viewModelScope.launch {
-            firebaseRepo.getSearchHistory()
+            getSearchHistoryUseCase()
                 .onSuccess { historyList ->
-                    // Fetch parking spot names for each history item
-                    val historyItems = historyList.mapNotNull { historyDto ->
+                    val historyItems = historyList.mapNotNull { historyItem ->
                         try {
-                            val result = firebaseRepo.getParkingById(historyDto.parkingId)
+                            val result = getParkingSpotByIdUseCase(historyItem.parkingSpotId)
                             result.getOrNull()?.let { parkingSpot ->
                                 SearchResultItem(
-                                    id = historyDto.parkingId,
+                                    id = historyItem.parkingSpotId,
                                     displayText = parkingSpot.name ?: "Unknown Location",
                                     isHistory = true
                                 )
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "Error fetching parking spot for history item", e)
+                            Log.e(TAG, "Error fetching parking spot for history item")
                             null
                         }
                     }
@@ -363,16 +352,16 @@ class MapViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            firebaseRepo.getTitlesInSearch(query)
-                .onSuccess { searchDtoList ->
-                    _searchResults.value = searchDtoList.map { searchDto ->
+            searchParkingSpotsUseCase(query)
+                .onSuccess { searchResults ->
+                    _searchResults.value = searchResults.map { searchResult ->
                         SearchResultItem(
-                            id = searchDto.spotId,
-                            displayText = searchDto.name,
+                            id = searchResult.spotId,
+                            displayText = searchResult.name,
                             isHistory = false
                         )
                     }
-                    Log.d(TAG, "Found ${searchDtoList.size} search results for '$query'")
+                    Log.d(TAG, "Found ${searchResults.size} search results for '$query'")
                 }
                 .onFailure { e ->
                     Log.e(TAG, "Error searching parking spots", e)
@@ -392,15 +381,20 @@ class MapViewModel @Inject constructor(
             try {
                 // Save to search history if it's not already a history item
                 if (!result.isHistory) {
-                    firebaseRepo.addToSearchHistory(
+                    addToSearchHistoryUseCase(
                         spotId = result.id,
-                        searched = searchQuery.ifBlank { result.displayText }
+                        searchQuery = searchQuery.ifBlank { result.displayText }
                     )
-                    Log.d(TAG, "Added '${result.displayText}' to search history")
+                        .onSuccess {
+                            Log.d(TAG, "Added '${result.displayText}' to search history")
+                        }
+                        .onFailure { e ->
+                            Log.d(TAG, "Error adding to search history", e)
+                        }
                 }
 
                 // Get the parking spot details
-                firebaseRepo.getParkingById(result.id)
+                getParkingSpotByIdUseCase(result.id)
                     .onSuccess { parkingSpot ->
                         Log.d(TAG, "Found parking spot: ${parkingSpot.name}")
                         // The UI will handle showing the spot on the map
@@ -412,5 +406,15 @@ class MapViewModel @Inject constructor(
                 Log.e(TAG, "Error handling search result click", e)
             }
         }
+    }
+
+    /**
+     * Retrieves a parking spot by ID for display in the UI
+     *
+     * @param spotId The unique ID for the parking spot
+     * @return Result with parking spot or exception if if failure
+     */
+    suspend fun getParkingSpotForDisplay(spotId: String): Result<ParkingSpot> {
+        return getParkingSpotByIdUseCase(spotId)
     }
 }

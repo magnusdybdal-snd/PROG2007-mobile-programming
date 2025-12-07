@@ -1,10 +1,11 @@
 package com.example.motorcycleparking.features.settingsscreen
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.motorcycleparking.data.api.FirebaseRepo
 import com.example.motorcycleparking.data.repositories.SettingsRepository
+import com.example.motorcycleparking.domain.usecases.authentication.SignOutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,8 +49,12 @@ data class SettingsState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val firebaseRepo: FirebaseRepo
+    private val signOutUseCase: SignOutUseCase,
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "SettingsViewModel"
+    }
 
     private val repository = SettingsRepository(context)
 
@@ -109,6 +114,14 @@ class SettingsViewModel @Inject constructor(
 
     /** Signs out current user. */
     fun signOut(){
-        firebaseRepo.signOut()
+        viewModelScope.launch {
+            signOutUseCase()
+                .onSuccess {
+                    Log.d(TAG, "User signed out successfully")
+                }
+                .onFailure { exception ->
+                    Log.e(TAG, "Sign out failed", exception)
+                }
+        }
     }
 }

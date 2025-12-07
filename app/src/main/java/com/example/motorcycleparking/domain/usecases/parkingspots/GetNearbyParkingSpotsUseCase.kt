@@ -1,4 +1,4 @@
-package com.example.motorcycleparking.domain.usecases
+package com.example.motorcycleparking.domain.usecases.parkingspots
 
 import com.example.motorcycleparking.domain.models.ParkingSpot
 import com.example.motorcycleparking.domain.repositories.ParkingSpotRepository
@@ -8,7 +8,7 @@ import javax.inject.Inject
 class GetNearbyParkingSpotsUseCase @Inject constructor(
     private val repository: ParkingSpotRepository
 ) {
-    suspend fun getInBounds(
+    suspend operator fun invoke(
         swLat: Double,
         swLng: Double,
         neLat: Double,

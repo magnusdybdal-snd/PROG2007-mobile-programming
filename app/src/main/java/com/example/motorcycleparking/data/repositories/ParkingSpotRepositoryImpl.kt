@@ -29,8 +29,37 @@ class ParkingSpotRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun addParkingSpot(
+        name: String,
+        note: String,
+        displayAddress: String,
+        latitude: Double,
+        longitude: Double,
+        isFree: Boolean
+    ): Result<String> {
+        return firebaseRepo.addParkingSpot(
+            name = name,
+            note = note,
+            displayAddress = displayAddress,
+            latitude = latitude,
+            longitude = longitude,
+            isFree = isFree
+        )
+    }
+
+    override suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
+        return try {
+            firebaseRepo.getParkingById(spotId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
+/**
+ * Extension function to map from dto to domain
+ */
 fun ParkingSpotDto.toDomain(): ParkingSpot {
     return ParkingSpot(
         name = this.name,

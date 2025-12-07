@@ -3,8 +3,7 @@ package com.example.motorcycleparking.features.registerscreen
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.motorcycleparking.data.api.FirebaseRepo
-import com.example.motorcycleparking.features.loginscreen.LoginUiState
+import com.example.motorcycleparking.domain.usecases.authentication.RegisterUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +18,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val firebaseRepo: FirebaseRepo
+    private val registerUserUseCase: RegisterUserUseCase
 ) : ViewModel() {
 
     companion object {
@@ -46,18 +45,18 @@ class RegisterViewModel @Inject constructor(
                 isLoading = true
             )
 
-            try {
-                val user = firebaseRepo.createUser(email, password)
-                Log.d(TAG, "Successfully created user ${user?.uid}")
-                _uiState.value = RegisterUiState(
-                    userId = user?.uid
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Sign in failed", e)
-                _uiState.value = RegisterUiState(
-                    errorMessage = e.message ?: "Registration failed"
-                )
-            }
+            registerUserUseCase(email, password)
+                .onSuccess { uid ->
+                    _uiState.value = RegisterUiState(
+                        userId = uid
+                    )
+                }
+                .onFailure { exception ->
+                    Log.e(TAG, "User registration failed", exception)
+                    _uiState.value = RegisterUiState(
+                        errorMessage = exception.message ?: "Registration failed"
+                    )
+                }
         }
     }
     /**

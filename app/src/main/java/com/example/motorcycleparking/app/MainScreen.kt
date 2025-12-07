@@ -58,8 +58,8 @@ fun MainScreen(
 ) {
     val navItemList = listOf(
         NavItem("Map",      Routes.MAP,     Icons.Default.Home),
-        NavItem("Screen 2", Routes.FAVORITES, Icons.Default.Favorite),
-        NavItem("Screen 3", Routes.SETTINGS, Icons.Default.Settings)
+        NavItem("Favorites", Routes.FAVORITES, Icons.Default.Favorite),
+        NavItem("Settings", Routes.SETTINGS, Icons.Default.Settings)
     )
 
 

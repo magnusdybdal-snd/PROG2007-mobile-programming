@@ -1,9 +1,10 @@
 package com.example.motorcycleparking.features.favoiritescreen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.motorcycleparking.data.api.FirebaseRepo
-import com.example.motorcycleparking.domain.usecases.ToggleFavoriteUseCase
+import com.example.motorcycleparking.domain.usecases.favorites.GetFavoritesUseCase
+import com.example.motorcycleparking.domain.usecases.favorites.ToggleFavoriteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,12 +15,12 @@ import javax.inject.Inject
 /**
  * Manages favorites state with automatic reloading on favorite changes.
  *
- * @property firebaseRepo Repository for fetching user's favorite parking spots
+ * @property getFavoritesUseCase Use case for getting favorite parking spots
  * @property toggleFavoriteUseCase Use case for toggling favorites and emitting change events
  */
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
-    private val firebaseRepo: FirebaseRepo,
+    private val getFavoritesUseCase: GetFavoritesUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
@@ -53,13 +54,14 @@ class FavoritesViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = FavoritesUiState.Loading
 
-            val result = firebaseRepo.getFavorites()
+            val result = getFavoritesUseCase()
 
             result.fold(
                 onSuccess = { favorites ->
                     _uiState.value = FavoritesUiState.Success(favorites)
                 },
                 onFailure = { e ->
+                    Log.e(TAG, "Failed to load favorites", e)
                     _uiState.value = FavoritesUiState.Error(
                         message = e.message ?: "Failed to load favorites"
                     )
@@ -81,6 +83,7 @@ class FavoritesViewModel @Inject constructor(
                 .onSuccess {
                 }
                 .onFailure { e ->
+                    Log.e(TAG, "Failed to toggle favorite: $spotId", e)
                 }
         }
     }

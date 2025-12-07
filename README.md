@@ -26,3 +26,5 @@ Run unit tests:
 ```bash
 ./gradlew test
 ```
+
+47 unit tests covering geohash algorithms, use cases, and repository logic.

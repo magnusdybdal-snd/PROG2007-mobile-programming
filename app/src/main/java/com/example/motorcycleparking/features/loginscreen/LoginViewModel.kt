@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.motorcycleparking.data.api.FirebaseRepo
+import com.example.motorcycleparking.domain.usecases.authentication.GetCurrentUserUseCase
+import com.example.motorcycleparking.domain.usecases.authentication.SignInWithEmailPasswordUseCase
+import com.example.motorcycleparking.domain.usecases.authentication.SignInWithGoogleUseCase
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +21,9 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val firebaseRepo: FirebaseRepo
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
+    private val signInWithEmailPasswordUseCase: SignInWithEmailPasswordUseCase
 ) : ViewModel() {
 
     companion object {
@@ -34,7 +39,7 @@ class LoginViewModel @Inject constructor(
 
     private fun checkAuthState() {
         viewModelScope.launch {
-            val userId = firebaseRepo.getCurrentUserId()
+            val userId = getCurrentUserUseCase()
             if (userId != null) {
                 Log.d(TAG, "Found user with 'userId': $userId")
                 _uiState.value = LoginUiState(
@@ -56,18 +61,19 @@ class LoginViewModel @Inject constructor(
                 isLoading = true
             )
 
-            try {
-                val uid = firebaseRepo.signInWithGoogle(account)
-                _uiState.value = LoginUiState(
-                    isSignedIn = true,
-                    userId = uid
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Google sign in failed", e)
-                _uiState.value = LoginUiState(
-                    errorMessage = e.message ?: "Google sign in failed"
-                )
-            }
+            signInWithGoogleUseCase(account)
+                .onSuccess { uid ->
+                    _uiState.value = LoginUiState(
+                        isSignedIn = true,
+                        userId = uid
+                    )
+                }
+                .onFailure { exception ->
+                    Log.e(TAG, "Google sign in failed", exception)
+                    _uiState.value = LoginUiState(
+                        errorMessage = exception.message ?: "Google sign in failed"
+                    )
+                }
         }
     }
 
@@ -83,19 +89,19 @@ class LoginViewModel @Inject constructor(
                 isLoading = true
             )
 
-            try {
-                val uid = firebaseRepo.signInWithEmailPassword(email, password)
-                _uiState.value = LoginUiState(
-                    isSignedIn = true,
-                    userId = uid
-                )
-
-            } catch (e: Exception) {
-                Log.e(TAG, "Sign in failed", e)
-                _uiState.value = LoginUiState(
-                    errorMessage = e.message ?: "Sign in failed"
-                )
-            }
+            signInWithEmailPasswordUseCase(email, password)
+                .onSuccess { uid ->
+                    _uiState.value = LoginUiState(
+                        isSignedIn = true,
+                        userId = uid
+                    )
+                }
+                .onFailure { exception ->
+                    Log.e(TAG, "Email sign in failed", exception)
+                    _uiState.value = LoginUiState(
+                        errorMessage = exception.message ?: "Email sign in failed"
+                    )
+                }
         }
     }
 
