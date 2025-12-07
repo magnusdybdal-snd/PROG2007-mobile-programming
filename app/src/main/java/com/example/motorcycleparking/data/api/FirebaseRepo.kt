@@ -216,7 +216,7 @@ class FirebaseRepo @Inject constructor(
      */
     suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
         return try {
-            val doc = db.collection("parkingspots")
+            val doc = db.collection("parking spots")
                 .document(spotId)
                 .get()
                 .await()
