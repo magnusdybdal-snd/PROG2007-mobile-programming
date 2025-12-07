@@ -28,11 +28,5 @@ class AddParkingSpotsUseCase @Inject constructor(
             longitude = longitude,
             isFree = isFree
         )
-            .onSuccess {
-                Log.e(TAG, "Added parking spot $name successfully")
-            }
-            .onFailure { exception ->
-                Log.e(TAG, "Failed to add parking spot", exception)
-            }
     }
 }

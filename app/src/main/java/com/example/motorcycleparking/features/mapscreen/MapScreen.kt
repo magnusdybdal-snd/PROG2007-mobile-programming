@@ -134,6 +134,7 @@ fun MapScreen(
 
                 // Get the parking spot and show it on the map
                 coroutineScope.launch {
+                    viewModel.
                     viewModel.firebaseRepo.getParkingById(result.id)
                         .onSuccess { parkingSpot ->
                             selectedSpot = parkingSpot
