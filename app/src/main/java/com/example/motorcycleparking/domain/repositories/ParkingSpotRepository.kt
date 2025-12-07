@@ -48,5 +48,5 @@ interface ParkingSpotRepository {
         isFree: Boolean
     ): Result<String>
 
-    suspend fun getParkingSpotById()
+    suspend fun getParkingById(spotId: String): Result<ParkingSpot>
 }

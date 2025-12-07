@@ -49,7 +49,11 @@ class ParkingSpotRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getParkingById(spotId: String): Result<ParkingSpot> {
-        TODO("Not yet implemented")
+        return try {
+            firebaseRepo.getParkingById(spotId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
 
